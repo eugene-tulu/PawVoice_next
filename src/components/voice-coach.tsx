@@ -16,7 +16,6 @@ export default function VoiceCoach({ petId }: { petId: string }) {
       console.error("Missing Vapi env vars");
       return;
     }
-
     const vapi = new Vapi(key, assistant);
     vapi.on("call-start", () => setListening(true));
     vapi.on("call-end", () => setListening(false));
@@ -56,7 +55,6 @@ export default function VoiceCoach({ petId }: { petId: string }) {
           </>
         )}
       </button>
-
       {transcript && (
         <p className="mt-3 p-3 bg-white rounded border italic text-gray-700 max-w-md">
           {transcript}

@@ -23,7 +23,6 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center p-4">
       <form onSubmit={handleSubmit} className="space-y-4 w-full max-w-md">
         <h1 className="text-2xl font-bold text-center">🐾 PawVoice Pro</h1>
-
         <input
           type="email"
           value={email}
@@ -32,7 +31,6 @@ export default function LoginPage() {
           className="w-full px-4 py-2 border rounded"
           required
         />
-
         <input
           type="password"
           value={password}
@@ -41,14 +39,12 @@ export default function LoginPage() {
           className="w-full px-4 py-2 border rounded"
           required
         />
-
         <button
           type="submit"
           className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
         >
           Sign in with password
         </button>
-
         {msg && <p className="text-center text-sm text-gray-600">{msg}</p>}
       </form>
     </div>
