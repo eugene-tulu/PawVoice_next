@@ -1,4 +1,3 @@
-// src/components/voice-coach.tsx
 "use client";
 import { useEffect, useState } from "react";
 import { useMutation } from "convex/react";
@@ -11,49 +10,53 @@ export default function VoiceCoach({ petId }: { petId: string }) {
   const createSession = useMutation(api.sessions.create);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    const key = process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY;
+    const assistant = process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID;
+    if (!key || !assistant) {
+      console.error("Missing Vapi env vars");
+      return;
+    }
 
-    // ✅ Initialize with just the API key
-    const vapi = new Vapi(process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY!);
-
-    vapi.on("speech-start", () => setListening(true));
-    vapi.on("speech-end", () => setListening(false));
-    vapi.on("transcript", (t) => setTranscript(t.transcript));
-    (window as any).vapiInstance = vapi;
-
-    return () => {
-      vapi.stop();
-    };
+    const vapi = new Vapi(key, assistant);
+    vapi.on("call-start", () => setListening(true));
+    vapi.on("call-end", () => setListening(false));
+    vapi.on("message", (msg: { type: string; transcript?: string }) => {
+      if (msg.type === "transcript" && msg.transcript) setTranscript(msg.transcript);
+    });
+    (window as unknown as { vapiInstance?: typeof vapi }).vapiInstance = vapi;
   }, []);
 
   useEffect(() => {
-    if (transcript.includes("Shall we continue?")) {
+    if (transcript.toLowerCase().includes("shall we continue?")) {
       createSession({ petId, transcript, outcome: "success", createdAt: Date.now() });
     }
   }, [transcript, createSession, petId]);
 
   const toggle = () => {
-    const vapi = (window as any).vapiInstance;
+    const vapi = (window as unknown as { vapiInstance?: typeof vapi }).vapiInstance;
     if (!vapi) return;
-    
-    if (listening) {
-      vapi.stop();
-    } else {
-      // ✅ Pass assistant ID to .start()
-      vapi.start(process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID!);
-    }
+    listening ? vapi.stop() : vapi.start();
   };
 
   return (
     <div className="mt-6">
       <button
         onClick={toggle}
-        className={`w-48 h-16 rounded-full text-white text-lg font-bold shadow-lg ${
-          listening ? "bg-red-500 animate-pulse" : "bg-paw hover:bg-paw-dark"
+        className={`flex items-center justify-center gap-2 w-56 h-16 rounded-full text-white text-xl font-bold shadow-xl transition-all ${
+          listening ? "bg-red-600 animate-pulse scale-105" : "bg-paw hover:bg-paw-dark"
         }`}
       >
-        {listening ? "Stop" : "Talk to Coach"}
+        {listening ? (
+          <>
+            <span className="text-2xl">⏹</span> Stop
+          </>
+        ) : (
+          <>
+            <span className="text-2xl">🎤</span> Talk to Buddy
+          </>
+        )}
       </button>
+
       {transcript && (
         <p className="mt-3 p-3 bg-white rounded border italic text-gray-700 max-w-md">
           {transcript}

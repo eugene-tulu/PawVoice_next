@@ -1,15 +1,11 @@
-// src/app/register/page.tsx
 "use client";
 import { useState } from "react";
-import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState("");
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,13 +51,6 @@ export default function RegisterPage() {
         </button>
 
         {msg && <p className="text-center text-sm text-gray-600">{msg}</p>}
-
-        <p className="text-center text-sm">
-          Already have an account?{" "}
-          <Link href="/login" className="underline text-blue-600">
-            Sign in
-          </Link>
-        </p>
       </form>
     </div>
   );
