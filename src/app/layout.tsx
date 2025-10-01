@@ -1,4 +1,4 @@
-import { ConvexClientProvider } from "../convex-client-provider";
+import { ConvexClientProvider } from "./ConvexClientProvider";
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html>
