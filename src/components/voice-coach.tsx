@@ -56,11 +56,26 @@ export default function VoiceCoach({ petId }: { petId: string }) {
         className={`w-48 h-16 rounded-full text-white text-lg font-bold shadow-lg ${
           listening ? "bg-red-500 animate-pulse" : "bg-paw hover:bg-paw-dark"
         }`}
+        style={{
+          width: '14rem',
+          height: '4rem',
+          borderRadius: '9999px',
+          color: 'white',
+          fontSize: '1.125rem',
+          fontWeight: '700',
+          boxShadow: listening ? '0 8px 24px rgba(239, 68, 68, 0.3)' : '0 8px 24px rgba(233, 116, 81, 0.25)',
+          background: listening ? '#ef4444' : '#e97451',
+          border: 'none',
+          cursor: 'pointer',
+          transition: 'all 0.3s'
+        }}
+        onMouseEnter={(e) => !listening && (e.currentTarget.style.background = '#d45a38')}
+        onMouseLeave={(e) => !listening && (e.currentTarget.style.background = '#e97451')}
       >
         {listening ? "Stop" : "Talk to Coach"}
       </button>
       {transcript && (
-        <p className="mt-3 p-3 bg-white rounded border italic text-gray-700 max-w-md">
+        <p className="mt-3 p-3 bg-white rounded border italic text-gray-700 max-w-md" style={{ marginTop: '1.5rem', padding: '1.25rem', background: 'white', borderRadius: '0.875rem', border: '1.5px solid #f0e6d6', fontStyle: 'italic', color: '#6b5d4f', lineHeight: '1.7', fontSize: '0.975rem', boxShadow: '0 2px 12px rgba(233, 116, 81, 0.05)' }}>
           {transcript}
         </p>
       )}
