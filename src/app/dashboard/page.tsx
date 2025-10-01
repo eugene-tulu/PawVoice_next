@@ -4,6 +4,7 @@ import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useRouter } from "next/navigation";
 import CreatePet from "@/components/create-pet";
+import VoiceCoach from "@/components/voice-coach";
 
 export default function Dashboard() {
   const pets = useQuery(api.pets.list);
@@ -31,7 +32,7 @@ export default function Dashboard() {
           {pet.breed} · {pet.age} y · {pet.energy} energy
         </p>
       </div>
-      {/* Voice coach will go here next */}
+      <VoiceCoach petId={pet._id} />
     </main>
   );
 }

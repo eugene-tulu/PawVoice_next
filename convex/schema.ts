@@ -10,4 +10,11 @@ export default defineSchema({
     age: v.number(),
     energy: v.union(v.literal('low'), v.literal('medium'), v.literal('high')),
   }),
+
+  sessions: defineTable({
+    petId: v.id('pets'),
+    transcript: v.string(),
+    outcome: v.union(v.literal('success'), v.literal('retry')),
+    createdAt: v.number(),
+  }),
 })
