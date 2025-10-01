@@ -15,7 +15,7 @@ export const createAuth = (
   { optionsOnly } = { optionsOnly: false },
 ) => {
   return betterAuth({
-    logger: { disabled: optionsOnly },
+    logger: { level: "debug" },
     baseURL: siteUrl,
     database: authComponent.adapter(ctx),
     emailAndPassword: { enabled: true, requireEmailVerification: false },
