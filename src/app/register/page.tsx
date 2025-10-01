@@ -1,5 +1,7 @@
+// src/app/register/page.tsx
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
 
 export default function RegisterPage() {
@@ -24,6 +26,7 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center p-4">
       <form onSubmit={handleSubmit} className="space-y-4 w-full max-w-md">
         <h1 className="text-2xl font-bold text-center">🐾 PawVoice Pro</h1>
+
         <input
           type="email"
           value={email}
@@ -32,6 +35,7 @@ export default function RegisterPage() {
           className="w-full px-4 py-2 border rounded"
           required
         />
+
         <input
           type="password"
           value={password}
@@ -40,13 +44,22 @@ export default function RegisterPage() {
           className="w-full px-4 py-2 border rounded"
           required
         />
+
         <button
           type="submit"
           className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
         >
           Create account
         </button>
+
         {msg && <p className="text-center text-sm text-gray-600">{msg}</p>}
+
+        <p className="text-center text-sm">
+          Already have an account?{" "}
+          <Link href="/login" className="underline text-blue-600">
+            Sign in
+          </Link>
+        </p>
       </form>
     </div>
   );
