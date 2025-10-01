@@ -1,32 +1,37 @@
 // src/app/dashboard/page.tsx
 "use client";
-import { useEffect } from "react";
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 import { useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
+import CreatePet from "@/components/create-pet";
 
 export default function Dashboard() {
-  const { data: session, isPending } = authClient.useSession();
+  const pets = useQuery(api.pets.list);
   const router = useRouter();
 
-  useEffect(() => {
-    if (!isPending && !session) {
-      router.push("/login");
-    }
-  }, [isPending, session, router]);
+  if (pets === undefined) return <div className="p-8">Loading...</div>;
+  if (!pets) return <div className="p-8">Failed to load pets</div>;
 
-  if (isPending) return <div className="p-8">Loading...</div>;
-  if (!session) return null;
+  if (pets.length === 0) {
+    return (
+      <main className="p-8 bg-cream min-h-screen">
+        <h1 className="text-3xl font-bold text-paw mb-4">Dashboard 🐾</h1>
+        <CreatePet onSuccess={(id) => router.push(`/dashboard?pet=${id}`)} />
+      </main>
+    );
+  }
 
+  const pet = pets[0];
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold">Welcome, {session.user.name}!</h1>
-      <p className="mt-2">Email: {session.user.email}</p>
-      <button
-        onClick={() => authClient.signOut()}
-        className="mt-4 px-4 py-2 bg-red-600 text-white rounded"
-      >
-        Sign out
-      </button>
-    </div>
+    <main className="p-8 bg-cream min-h-screen">
+      <h1 className="text-3xl font-bold text-paw mb-4">Dashboard 🐾</h1>
+      <div className="border rounded p-4 bg-white shadow mb-6 max-w-md">
+        <p className="font-bold">{pet.name}</p>
+        <p className="text-sm text-gray-600">
+          {pet.breed} · {pet.age} y · {pet.energy} energy
+        </p>
+      </div>
+      {/* Voice coach will go here next */}
+    </main>
   );
 }
