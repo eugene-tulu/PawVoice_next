@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import Vapi from "@vapi-ai/web";
 
 export default function VoiceCoach({ petId }: { petId: string }) {
   const [listening, setListening] = useState(false);
@@ -10,43 +11,36 @@ export default function VoiceCoach({ petId }: { petId: string }) {
   const createSession = useMutation(api.sessions.create);
 
   useEffect(() => {
-    // Load Vapi SDK
-    const script = document.createElement("script");
-    script.src = "https://unpkg.com/@vapi-ai/web@latest/dist/index.umd.js"; // ✅ no trailing space
-    script.onload = () => {
-      const vapi = new (window as any).Vapi(process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY!);
-      vapi.setAssistant(process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID!); // ✅ set assistant after init
-      vapi.on("speech-start", () => setListening(true));
-      vapi.on("speech-end", () => setListening(false));
-      vapi.on("transcript", (t: any) => setTranscript(t.transcript));
-      (window as any).vapiInstance = vapi;
-    };
-    document.body.appendChild(script);
+    if (typeof window === "undefined") return;
+
+    // ✅ Initialize with just the API key
+    const vapi = new Vapi(process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY!);
+
+    vapi.on("speech-start", () => setListening(true));
+    vapi.on("speech-end", () => setListening(false));
+    vapi.on("transcript", (t) => setTranscript(t.transcript));
+    (window as any).vapiInstance = vapi;
 
     return () => {
-      document.body.removeChild(script);
+      vapi.stop();
     };
   }, []);
 
-  // Auto-save session when coach says "Shall we continue?"
   useEffect(() => {
     if (transcript.includes("Shall we continue?")) {
-      createSession({ 
-        petId, 
-        transcript, 
-        outcome: "success",
-        createdAt: Date.now()
-      });
+      createSession({ petId, transcript, outcome: "success", createdAt: Date.now() });
     }
   }, [transcript, createSession, petId]);
 
   const toggle = () => {
     const vapi = (window as any).vapiInstance;
     if (!vapi) return;
+    
     if (listening) {
       vapi.stop();
     } else {
-      vapi.start();
+      // ✅ Pass assistant ID to .start()
+      vapi.start(process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID!);
     }
   };
 
