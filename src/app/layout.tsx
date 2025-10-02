@@ -1,7 +1,10 @@
+// src/app/layout.tsx
 import { ConvexClientProvider } from "./ConvexClientProvider";
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+import "./globals.css"; // includes Tailwind
+
+export default function RootLayout({ children }) {
   return (
-    <html>
+    <html lang="en">
       <body>
         <ConvexClientProvider>{children}</ConvexClientProvider>
       </body>
