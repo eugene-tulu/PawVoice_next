@@ -1,12 +1,16 @@
 // src/app/layout.tsx
 import { ConvexClientProvider } from "./ConvexClientProvider";
-import "./globals.css"; // includes Tailwind
+import { Analytics } from "@vercel/analytics/react"; // ← 1 line
+import "./globals.css";
 
-export default function RootLayout({ children }) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <ConvexClientProvider>{children}</ConvexClientProvider>
+        <ConvexClientProvider>
+          {children}
+          <Analytics />
+        </ConvexClientProvider>
       </body>
     </html>
   );
