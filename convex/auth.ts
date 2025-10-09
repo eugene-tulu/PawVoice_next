@@ -18,7 +18,7 @@ export const createAuth = (
     logger: { level: "debug" },
     baseURL: siteUrl,
     database: authComponent.adapter(ctx),
-    emailAndPassword: { enabled: true, requireEmailVerification: false },
+    emailAndPassword: { enabled: true, requireEmailVerification: true },
     plugins: [convex()],
   });
 };

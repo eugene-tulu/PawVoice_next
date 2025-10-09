@@ -17,4 +17,10 @@ export default defineSchema({
     outcome: v.union(v.literal('success'), v.literal('retry')),
     createdAt: v.number(),
   }),
+
+  // 👇 NEW: App user data (linked to auth user)
+  users: defineTable({
+    authId: v.string(),
+    minutesRemaining: v.number(),
+  }).index('by_auth_id', ['authId']),
 })

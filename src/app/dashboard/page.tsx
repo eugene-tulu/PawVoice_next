@@ -5,6 +5,7 @@ import { api } from "../../../convex/_generated/api";
 import { useRouter } from "next/navigation";
 import CreatePet from "@/components/create-pet";
 import VoiceCoach from "@/components/voice-coach";
+import BuyMinutes from "@/components/buy-minutes";
 
 export default function Dashboard() {
   const pets = useQuery(api.pets.list);
@@ -18,6 +19,7 @@ export default function Dashboard() {
       <main className="p-8 bg-cream min-h-screen" style={{ background: 'linear-gradient(135deg, #fdfbf7 0%, #fff5e6 100%)', padding: '2.5rem 2rem' }}>
         <h1 className="text-3xl font-bold text-paw mb-4" style={{ fontSize: '2.25rem', color: '#e97451', marginBottom: '2rem', letterSpacing: '-0.02em' }}>Dashboard 🐾</h1>
         <CreatePet onSuccess={(id) => router.push(`/dashboard?pet=${id}`)} />
+        <BuyMinutes /> 
       </main>
     );
   }
@@ -33,6 +35,7 @@ export default function Dashboard() {
         </p>
       </div>
       <VoiceCoach petId={pet._id} />
+      <BuyMinutes />
     </main>
   );
 }
