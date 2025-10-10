@@ -27,3 +27,16 @@ export const getCurrentUser = query({
   args: {},
   handler: async (ctx) => authComponent.getAuthUser(ctx),
 });
+
+// ✅ Keep this — it's safe
+export const getAuthStatus = query({
+  handler: async (ctx) => {
+    const user = await authComponent.getAuthUser(ctx);
+    if (!user) return { status: "unauthenticated" as const };
+    return {
+      status: "authenticated" as const,
+      emailVerified: user.emailVerified,
+      email: user.email,
+    };
+  },
+});

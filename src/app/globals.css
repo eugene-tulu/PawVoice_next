@@ -1,8 +1,11 @@
+/* src/app/globals.css */
 @import "tailwindcss";
 
 :root {
   --background: #fdfbf7;
   --foreground: #2d2419;
+  --background-dark: #1a1410;
+  --foreground-dark: #f5f0e8;
 }
 
 @theme inline {
@@ -13,13 +16,23 @@
   --color-cream: #fdfbf7;
   --color-paw: #e97451;
   --color-paw-dark: #d45a38;
+  /* ✅ Add dark variants */
+  --color-cream-dark: #1a1410;
+  --color-paw-dark-mode: #ff9e85;
 }
 
+/* ✅ Dark mode override */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #1a1410;
-    --foreground: #f5f0e8;
+    --background: var(--background-dark);
+    --foreground: var(--foreground-dark);
   }
+}
+
+/* ✅ Force dark mode via class (for next-themes) */
+.dark {
+  --background: var(--background-dark);
+  --foreground: var(--foreground-dark);
 }
 
 body {
@@ -28,4 +41,20 @@ body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   letter-spacing: -0.01em;
   line-height: 1.6;
+  transition: background 0.3s ease, color 0.3s ease; /* ✅ Smooth transition */
+}
+
+/* ✅ Scrollbar styling (optional but gorgeous) */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-paw);
+  border-radius: 4px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: var(--color-paw-dark-mode);
 }
