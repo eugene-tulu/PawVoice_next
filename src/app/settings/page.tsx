@@ -35,10 +35,10 @@ export default function Settings() {
 
   if (me === undefined || usage === undefined) {
     return (
-      <div className="min-h-screen bg-cream dark:bg-cream-dark flex items-center justify-center">
+      <div className="min-h-screen bg-paper flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-          <p className="text-sm text-gray-600 dark:text-gray-400">Loading…</p>
+          <div className="w-8 h-8 border-2 border-ink-2 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+          <p className="text-sm text-muted">Loading…</p>
         </div>
       </div>
     );
@@ -82,32 +82,30 @@ export default function Settings() {
     });
 
   return (
-    <div className="min-h-screen bg-cream dark:bg-cream-dark">
+    <div className="min-h-screen bg-paper text-ink font-body">
       <Navigation />
-      <main className="max-w-3xl mx-auto px-4 py-12">
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-10">
+      <main className="max-w-3xl mx-auto px-6 py-16">
+        <h1 className="font-display text-3xl font-black tracking-tight text-ink mb-10">
           Settings
         </h1>
 
-        <section className="mb-10">
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">
+        <section className="mb-12">
+          <h2 className="font-display text-xl font-semibold text-ink mb-4">
             Phone number
           </h2>
-          <div className="border border-amber-100 dark:border-amber-900/30 rounded-lg p-4">
-            <p className="text-sm text-gray-600 dark:text-gray-300">
+          <div className="border border-rule rounded-lg p-5">
+            <p className="text-sm text-ink-2">
               Registered:{" "}
-              <strong className="text-gray-800 dark:text-white">
-                {me?.phone ?? "Not registered"}
-              </strong>
+              <strong className="text-ink">{me?.phone ?? "Not registered"}</strong>
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-xs text-muted mt-1">
               Your phone number is required to receive calls on Vapi. It is
               matched against caller ID when you call your assigned number.
             </p>
             {!me?.phone && (
               <form onSubmit={handlePhoneRegister} className="mt-4 flex gap-2 items-end">
                 <div>
-                  <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
+                  <label className="block text-xs text-muted mb-1">
                     Phone number (E.164, e.g. +15551234567)
                   </label>
                   <input
@@ -115,90 +113,84 @@ export default function Settings() {
                     value={phoneInput}
                     onChange={(e) => setPhoneInput(e.target.value)}
                     placeholder="+15551234567"
-                    className="px-3 py-2 border border-amber-200 dark:border-amber-900/30 rounded text-sm bg-amber-50/30 dark:bg-gray-700/50 text-gray-800 dark:text-gray-200"
+                    className="px-3 py-2 border border-rule rounded text-sm bg-paper text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-focus"
                     required
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={phoneLoading}
-                  className="px-4 py-2 bg-paw text-white rounded text-sm font-semibold hover:bg-paw-dark disabled:opacity-60"
+                  className="px-4 py-2 bg-accent text-paper rounded text-sm font-medium hover:bg-ink transition-colors disabled:opacity-60"
                 >
                   {phoneLoading ? "Saving…" : "Register"}
                 </button>
-                {phoneError && <p className="text-xs text-red-600 ml-2">{phoneError}</p>}
+                {phoneError && (
+                  <p className="text-xs text-muted ml-2">{phoneError}</p>
+                )}
               </form>
             )}
           </div>
         </section>
 
-        <section className="mb-10">
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">
+        <section className="mb-12">
+          <h2 className="font-display text-xl font-semibold text-ink mb-4">
             Credits
           </h2>
-          <div className="border border-amber-100 dark:border-amber-900/30 rounded-lg p-4">
-            <p className="text-sm text-gray-600 dark:text-gray-300">
+          <div className="border border-rule rounded-lg p-5">
+            <p className="text-sm text-ink-2">
               Current balance:{" "}
-              <strong className="text-amber-700 dark:text-amber-400">
-                {formatCost(me?.credits ?? 0)}
+              <strong className="text-ink font-medium tabular-nums">
+                {me?.credits ? formatCost(me.credits) : "$0.00"}
               </strong>
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-xs text-muted mt-1">
               $0.18 per minute of voice call. Credits never expire.
             </p>
             <button
               onClick={handlePortal}
               disabled={portalLoading || !me?.dodoCustomerId}
-              className="mt-3 px-4 py-2 border border-amber-200 dark:border-amber-900/30 rounded text-sm font-medium text-gray-800 dark:text-gray-200 hover:bg-amber-50 dark:hover:bg-gray-700 disabled:opacity-50"
+              className="mt-3 px-4 py-2 border border-rule rounded text-sm font-medium text-ink hover:bg-paper-2 disabled:opacity-50 transition-colors"
             >
               {portalLoading ? "Opening…" : "Billing portal"}
             </button>
           </div>
         </section>
 
-        <section className="mb-10">
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">
+        <section className="mb-12">
+          <h2 className="font-display text-xl font-semibold text-ink mb-4">
             Buy credits
           </h2>
           <BuyCredits />
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">
+          <h2 className="font-display text-xl font-semibold text-ink mb-4">
             Usage history
           </h2>
           {usage.length === 0 ? (
-            <p className="text-gray-600 dark:text-gray-400 text-sm">
+            <p className="text-ink-2 text-sm">
               No usage recorded yet. Make your first voice call to see it here.
             </p>
           ) : (
             <table className="w-full text-left text-sm">
               <thead>
                 <tr>
-                  <th className="pb-2 text-gray-800 dark:text-white">Date</th>
-                  <th className="pb-2 text-gray-800 dark:text-white">Duration</th>
-                  <th className="pb-2 text-gray-800 dark:text-white">Cost</th>
-                  <th className="pb-2 text-gray-800 dark:text-white">Activities</th>
+                  <th className="pb-2 text-ink">Date</th>
+                  <th className="pb-2 text-ink">Duration</th>
+                  <th className="pb-2 text-ink">Cost</th>
+                  <th className="pb-2 text-ink">Activities</th>
                 </tr>
               </thead>
               <tbody>
                 {usage.map((u) => (
                   <tr
                     key={u._id}
-                    className="border-t border-amber-100 dark:border-amber-900/30"
+                    className="border-t border-rule-2"
                   >
-                    <td className="py-2 text-gray-600 dark:text-gray-300">
-                      {formatDate(u.recordedAt)}
-                    </td>
-                    <td className="py-2 text-gray-600 dark:text-gray-300">
-                      {Math.round(u.durationSec / 60)}m
-                    </td>
-                    <td className="py-2 text-gray-600 dark:text-gray-300">
-                      {formatCost(u.costCents)}
-                    </td>
-                    <td className="py-2 text-gray-600 dark:text-gray-300">
-                      {u.activityCount}
-                    </td>
+                    <td className="py-2 text-ink-2">{formatDate(u.recordedAt)}</td>
+                    <td className="py-2 text-ink-2">{Math.round(u.durationSec / 60)}m</td>
+                    <td className="py-2 text-ink-2 tabular-nums">{formatCost(u.costCents)}</td>
+                    <td className="py-2 text-ink-2">{u.activityCount}</td>
                   </tr>
                 ))}
               </tbody>

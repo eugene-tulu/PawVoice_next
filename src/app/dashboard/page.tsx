@@ -59,10 +59,10 @@ export default function Dashboard() {
   const loading = me === undefined || pets === undefined;
   if (loading) {
     return (
-      <div className="min-h-screen bg-cream dark:bg-cream-dark flex items-center justify-center">
+      <div className="min-h-screen bg-paper flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-          <p className="text-sm text-gray-600 dark:text-gray-400">Loading…</p>
+          <div className="w-8 h-8 border-2 border-ink-2 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+          <p className="text-sm text-muted">Loading…</p>
         </div>
       </div>
     );
@@ -74,41 +74,47 @@ export default function Dashboard() {
   const creditsDollars = (credits / 100).toFixed(2);
 
   return (
-    <div className="min-h-screen bg-cream dark:bg-cream-dark">
+    <div className="min-h-screen bg-paper text-ink font-body">
       <Navigation />
-      <main className="max-w-4xl mx-auto px-4 py-12">
-        <div className="flex justify-between items-start mb-10">
-          <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
+      <main className="max-w-4xl mx-auto px-6 py-16">
+        <div className="flex justify-between items-baseline mb-12">
+          <h1 className="font-display text-3xl font-black tracking-tight">
             Dashboard
           </h1>
           <button
             onClick={() => window.location.reload()}
-            className="text-xs text-gray-500 dark:text-gray-500 hover:text-amber-700 dark:hover:text-amber-400"
+            className="text-xs text-muted hover:text-ink transition-colors"
           >
             Refresh
           </button>
         </div>
 
-        <section className="mb-10">
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">
+        <section className="mb-12">
+          <h2 className="font-display text-xl font-semibold text-ink mb-4">
             Account
           </h2>
-          <div className="border border-amber-100 dark:border-amber-900/30 rounded-lg p-4">
-            <p className="text-sm text-gray-600 dark:text-gray-300">
-              Email: {user?.email}
+          <div className="border border-rule rounded-lg p-5">
+            <p className="text-sm text-ink-2">
+              Email: <span className="text-ink">{user?.email}</span>
             </p>
-            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-              Balance: <strong className="text-amber-700 dark:text-amber-400">${creditsDollars}</strong>
+            <p className="text-sm text-ink-2 mt-1">
+              Balance:{" "}
+              <strong className="text-ink font-medium tabular-nums">${creditsDollars}</strong>
             </p>
-            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-              Phone: {hasPhone ? user.phone : <span className="text-red-600">Not registered</span>}
+            <p className="text-sm text-ink-2 mt-1">
+              Phone:{" "}
+              {hasPhone ? (
+                <span className="text-ink font-medium">{user.phone}</span>
+              ) : (
+                <span className="text-muted">Not registered</span>
+              )}
             </p>
           </div>
 
           {!hasPhone && (
             <form onSubmit={handlePhoneRegister} className="mt-4 flex gap-2 items-end">
               <div>
-                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
+                <label className="block text-xs text-muted mb-1">
                   Phone number (E.164)
                 </label>
                 <input
@@ -116,28 +122,30 @@ export default function Dashboard() {
                   value={phoneInput}
                   onChange={(e) => setPhoneInput(e.target.value)}
                   placeholder="+15551234567"
-                  className="px-3 py-2 border border-amber-200 dark:border-amber-900/30 rounded text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200"
+                  className="px-3 py-2 border border-rule rounded text-sm bg-paper-2 text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-focus"
                   required
                 />
               </div>
               <button
                 type="submit"
                 disabled={phoneLoading}
-                className="px-4 py-2 bg-paw text-white rounded text-sm font-semibold hover:bg-paw-dark disabled:opacity-60"
+                className="px-4 py-2 bg-accent text-paper rounded text-sm font-medium hover:bg-ink transition-colors disabled:opacity-60"
               >
                 {phoneLoading ? "Saving…" : "Register"}
               </button>
-              {phoneError && <p className="text-xs text-red-600 ml-2">{phoneError}</p>}
+              {phoneError && (
+                <p className="text-xs text-muted ml-2">{phoneError}</p>
+              )}
             </form>
           )}
         </section>
 
-        <section className="mb-10">
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">
+        <section className="mb-12">
+          <h2 className="font-display text-xl font-semibold text-ink mb-4">
             Your pets
           </h2>
           {pets && pets.length === 0 ? (
-            <p className="text-gray-600 dark:text-gray-400 text-sm">
+            <p className="text-ink-2 text-sm">
               You haven&apos;t added any pets yet. Add one below to get started.
             </p>
           ) : null}
@@ -146,25 +154,25 @@ export default function Dashboard() {
               {pets.map((pet) => (
                 <li
                   key={pet._id}
-                  className="border border-amber-100 dark:border-amber-900/30 rounded-lg p-4 hover:bg-amber-50/30 dark:hover:bg-amber-900/10 transition"
+                  className="border border-rule rounded-lg p-4 hover:bg-paper-2 transition-colors"
                 >
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="font-semibold text-gray-800 dark:text-white">{pet.name}</h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <h3 className="font-display font-semibold text-ink">{pet.name}</h3>
+                      <p className="text-sm text-ink-2">
                         {pet.species}
                         {pet.breed ? `, ${pet.breed}` : ""}
                         {pet.age ? `, ${pet.age} years` : ""}
                       </p>
                       {pet.notes && (
-                        <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">{pet.notes}</p>
+                        <p className="text-xs text-muted mt-1">{pet.notes}</p>
                       )}
                     </div>
                     <Link
                       href={`/pets/${pet._id}`}
-                      className="text-sm text-amber-700 dark:text-amber-400 hover:underline"
+                      className="text-sm text-accent hover:text-ink transition-colors"
                     >
-                      View logs
+                      View logs →
                     </Link>
                   </div>
                 </li>
@@ -174,14 +182,16 @@ export default function Dashboard() {
           <CreatePet />
         </section>
 
-        <section className="mb-10">
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">
+        <section>
+          <h2 className="font-display text-xl font-semibold text-ink mb-4">
             Buy credits
           </h2>
           <BuyCredits />
         </section>
 
-        <MedicalDisclaimer />
+        <div className="mt-12">
+          <MedicalDisclaimer />
+        </div>
       </main>
     </div>
   );

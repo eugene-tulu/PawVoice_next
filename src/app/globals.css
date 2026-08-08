@@ -1,60 +1,149 @@
 /* src/app/globals.css */
 @import "tailwindcss";
 
-:root {
-  --background: #fdfbf7;
-  --foreground: #2d2419;
-  --background-dark: #1a1410;
-  --foreground-dark: #f5f0e8;
-}
+/*
+ * Hallmark · route: catalog · theme: Specimen
+ * Genre: editorial · paper: oklch(96% 0.015 80) · accent: oklch(58% 0.16 35)
+ * display: Fraunces · body: Geist · mono: Geist Mono · axes: light / italic-serif / chromatic-terracotta
+ */
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --color-cream: #fdfbf7;
-  --color-paw: #e97451;
-  --color-paw-dark: #d45a38;
-  /* ✅ Add dark variants */
-  --color-cream-dark: #1a1410;
-  --color-paw-dark-mode: #ff9e85;
+  /* --- Paper (warm-cream) --- */
+  --color-paper:    oklch(96% 0.015 80);
+  --color-paper-2:  oklch(93% 0.018 80);
+  --color-paper-3:  oklch(88% 0.016 75);
+
+  /* --- Neutrals (tinted warm) --- */
+  --color-rule:     oklch(82% 0.012 80);
+  --color-rule-2:   oklch(88% 0.014 80);
+  --color-neutral:  oklch(56% 0.008 80);
+  --color-muted:    oklch(44% 0.010 70);
+
+  /* --- Ink (warm dark) --- */
+  --color-ink:      oklch(20% 0.012 60);
+  --color-ink-2:    oklch(40% 0.014 60);
+
+  /* --- Accent (terracotta) --- */
+  --color-accent:   oklch(58% 0.16 35);
+  --color-focus:    oklch(55% 0.20 35);
+
+  /* Typography tokens (next/font sets the variable values) */
+  --font-display: var(--font-display);
+  --font-body:    var(--font-body);
+  --font-mono:    var(--font-mono);
+
+  /* Type scale (major third 1.25, body = 1rem) */
+  --text-xs:    0.64rem;
+  --text-sm:    0.8rem;
+  --text-base:  1rem;
+  --text-md:    1.25rem;
+  --text-lg:    1.5625rem;
+  --text-xl:    1.953rem;
+  --text-2xl:   2.441rem;
+  --text-3xl:   3.052rem;
+  --text-4xl:   clamp(2.75rem, 5vw + 1rem, 5.25rem);
 }
 
-/* ✅ Dark mode override */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: var(--background-dark);
-    --foreground: var(--foreground-dark);
-  }
-}
-
-/* ✅ Force dark mode via class (for next-themes) */
+/* Dark mode — paper lightens, ink darkens, accent tints */
 .dark {
-  --background: var(--background-dark);
-  --foreground: var(--foreground-dark);
+  --color-paper:    oklch(14% 0.010 60);
+  --color-paper-2:  oklch(18% 0.012 60);
+  --color-paper-3:  oklch(22% 0.012 60);
+  --color-rule:     oklch(30% 0.008 60);
+  --color-rule-2:   oklch(26% 0.008 60);
+  --color-neutral:  oklch(58% 0.008 60);
+  --color-muted:    oklch(72% 0.006 60);
+  --color-ink:      oklch(94% 0.006 80);
+  --color-ink-2:    oklch(78% 0.008 80);
+  --color-accent:   oklch(68% 0.14 35);
+  --color-focus:    oklch(70% 0.18 35);
+}
+
+:root {
+  --ease-out: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-in: cubic-bezier(0.42, 0, 1, 1);
+  --dur-short: 150ms;
+  --dur-base: 250ms;
+  --dur-long: 400ms;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 4rem;
+  overflow-x: clip;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  letter-spacing: -0.01em;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-size: var(--text-base);
   line-height: 1.6;
-  transition: background 0.3s ease, color 0.3s ease; /* ✅ Smooth transition */
+  letter-spacing: -0.01em;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s var(--ease-out), color 0.2s var(--ease-out);
 }
 
-/* ✅ Scrollbar styling (optional but gorgeous) */
+/* Headings — always roman, never italic */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display), Georgia, serif;
+  font-weight: 600;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  margin-top: 0;
+}
+
+/* Typography scale */
+.text-display { font-size: clamp(2.75rem, 5vw + 1rem, 5.25rem); }
+.text-4xl { font-size: 3.052rem; }
+.text-3xl { font-size: 2.441rem; }
+.text-2xl { font-size: 1.953rem; }
+.text-xl  { font-size: 1.5625rem; }
+.text-lg  { font-size: 1.25rem; }
+.text-base { font-size: 1rem; }
+.text-sm  { font-size: 0.8rem; }
+.text-xs  { font-size: 0.64rem; }
+
+.font-display  { font-family: var(--font-display), Georgia, serif; }
+.font-mono     { font-family: var(--font-mono), ui-monospace, monospace; }
+
+/* Tabular nums for data displays */
+td, th, [data-tabular] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Links */
+a {
+  color: var(--color-accent);
+  text-decoration: none;
+  transition: color var(--dur-short) var(--ease-out);
+}
+
+a:hover {
+  color: var(--color-ink);
+}
+
+/* Focus rings — instant, no fade-in */
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
+  height: 6px;
 }
-::-webkit-scrollbar-track {
-  background: transparent;
-}
+
 ::-webkit-scrollbar-thumb {
-  background: var(--color-paw);
-  border-radius: 4px;
+  background: var(--color-ink-2);
+  border-radius: 3px;
 }
-.dark ::-webkit-scrollbar-thumb {
-  background: var(--color-paw-dark-mode);
+
+/* Selection */
+::selection {
+  background: var(--color-accent);
+  color: var(--color-paper);
 }

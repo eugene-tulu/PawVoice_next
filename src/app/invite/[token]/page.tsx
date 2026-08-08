@@ -43,34 +43,34 @@ export default function InvitePage() {
   };
 
   return (
-    <div className="min-h-screen bg-cream dark:bg-cream-dark">
+    <div className="min-h-screen bg-paper text-ink font-body">
       <Navigation />
-      <main className="max-w-md mx-auto px-4 py-16 text-center">
-        <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
+      <main className="max-w-md mx-auto px-6 py-16 text-center">
+        <div className="w-16 h-16 bg-ink/5 rounded-full flex items-center justify-center mx-auto mb-6">
           <span className="text-2xl">✉️</span>
         </div>
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-3">
+        <h1 className="font-display text-2xl font-black text-ink mb-3">
           You&apos;ve been invited
         </h1>
-        <p className="text-gray-600 dark:text-gray-300 mb-6">
+        <p className="text-ink-2 mb-6">
           An owner has invited you to view or co-manage a pet on PawVoice.
           Accepting will add you as a member of this pet and give you access to
           its activity logs.
         </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-6 break-all">
+        <p className="text-xs text-muted break-all mb-6">
           Invite token: {token}
         </p>
         {error && (
-          <p className="text-sm text-red-600 mb-4">{error}</p>
+          <p className="text-sm text-muted mb-4">{error}</p>
         )}
         <button
           onClick={handleAccept}
           disabled={loading}
-          className="w-full px-6 py-3 bg-paw text-white rounded-full font-semibold hover:bg-paw-dark disabled:opacity-60 transition mb-4"
+          className="w-full px-6 py-3 bg-accent text-paper rounded-full font-medium hover:bg-ink transition-colors disabled:opacity-60"
         >
           {loading ? "Accepting…" : "Accept invitation"}
         </button>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
+        <p className="text-xs text-muted mt-6">
           Signed in as {authStatus.email}
         </p>
       </main>

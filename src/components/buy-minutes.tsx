@@ -30,11 +30,11 @@ export default function BuyCredits() {
   };
 
   return (
-    <div className="border border-amber-100 dark:border-amber-900/30 rounded-lg p-5 bg-white dark:bg-gray-800/80">
-      <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">
+    <div className="border border-rule rounded-lg p-5 bg-paper-2">
+      <h3 className="font-display text-lg font-semibold text-ink mb-2">
         Buy credits
       </h3>
-      <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+      <p className="text-sm text-ink-2 mb-4">
         $0.18 per minute. Packs never expire.
       </p>
       <div className="space-y-2">
@@ -44,14 +44,13 @@ export default function BuyCredits() {
             onClick={() => handlePurchase(pack.cents)}
             disabled={loading !== null}
             className="w-full py-2.5 px-4 rounded text-left font-medium transition
-              bg-amber-50 dark:bg-gray-700/50
-              hover:bg-amber-100 dark:hover:bg-gray-700
-              border border-amber-200 dark:border-amber-900/30
-              text-amber-800 dark:text-amber-200 disabled:opacity-60"
+              bg-paper hover:bg-rule
+              border border-rule
+              text-ink disabled:opacity-60"
           >
             {loading === pack.cents ? (
               <span className="flex items-center gap-2">
-                <span className="w-3 h-3 border border-amber-600 border-t-transparent rounded-full animate-spin" />
+                <span className="w-3 h-3 border border-ink-2 border-t-transparent rounded-full animate-spin" />
                 Redirecting…
               </span>
             ) : (

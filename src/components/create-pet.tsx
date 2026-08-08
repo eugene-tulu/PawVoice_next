@@ -33,26 +33,26 @@ export default function CreatePet({ onSuccess }: { onSuccess?: (id: string) => v
   return (
     <form
       onSubmit={handleSubmit}
-      className="border border-amber-100 dark:border-amber-900/30 rounded-lg p-5 bg-white dark:bg-gray-800/80"
+      className="border border-rule rounded-lg p-5 bg-paper-2"
     >
-      <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+      <h3 className="font-display text-lg font-semibold text-ink mb-4">
         Add a pet
       </h3>
-      {error && <p className="text-xs text-red-600 mb-3">{error}</p>}
+      {error && <p className="text-xs text-muted mb-3">{error}</p>}
 
       <input
         name="name"
         placeholder="Name *"
         required
         disabled={loading}
-        className="w-full px-3 py-2 border border-amber-200 dark:border-amber-900/30 rounded text-sm bg-amber-50/30 dark:bg-gray-700/50 text-gray-800 dark:text-gray-200 disabled:opacity-60"
+        className="w-full px-3 py-2 border border-rule rounded text-sm bg-paper text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-focus disabled:opacity-60"
       />
 
       <select
         name="species"
         required
         disabled={loading}
-        className="mt-3 w-full px-3 py-2 border border-amber-200 dark:border-amber-900/30 rounded text-sm bg-amber-50/30 dark:bg-gray-700/50 text-gray-800 dark:text-gray-200 disabled:opacity-60 cursor-pointer"
+        className="mt-3 w-full px-3 py-2 border border-rule rounded text-sm bg-paper text-ink focus:outline-none focus:ring-2 focus:ring-focus disabled:opacity-60 cursor-pointer"
       >
         <option value="">Species *</option>
         <option value="dog">Dog</option>
@@ -64,7 +64,7 @@ export default function CreatePet({ onSuccess }: { onSuccess?: (id: string) => v
         name="breed"
         placeholder="Breed (optional)"
         disabled={loading}
-        className="mt-3 w-full px-3 py-2 border border-amber-200 dark:border-amber-900/30 rounded text-sm bg-amber-50/30 dark:bg-gray-700/50 text-gray-800 dark:text-gray-200 disabled:opacity-60"
+        className="mt-3 w-full px-3 py-2 border border-rule rounded text-sm bg-paper text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-focus disabled:opacity-60"
       />
 
       <input
@@ -73,7 +73,7 @@ export default function CreatePet({ onSuccess }: { onSuccess?: (id: string) => v
         min="0"
         placeholder="Age in years (optional)"
         disabled={loading}
-        className="mt-3 w-full px-3 py-2 border border-amber-200 dark:border-amber-900/30 rounded text-sm bg-amber-50/30 dark:bg-gray-700/50 text-gray-800 dark:text-gray-200 disabled:opacity-60"
+        className="mt-3 w-full px-3 py-2 border border-rule rounded text-sm bg-paper text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-focus disabled:opacity-60"
       />
 
       <textarea
@@ -81,13 +81,13 @@ export default function CreatePet({ onSuccess }: { onSuccess?: (id: string) => v
         placeholder="Notes (optional)"
         rows={2}
         disabled={loading}
-        className="mt-3 w-full px-3 py-2 border border-amber-200 dark:border-amber-900/30 rounded text-sm bg-amber-50/30 dark:bg-gray-700/50 text-gray-800 dark:text-gray-200 disabled:opacity-60"
+        className="mt-3 w-full px-3 py-2 border border-rule rounded text-sm bg-paper text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-focus disabled:opacity-60"
       />
 
       <button
         type="submit"
         disabled={loading}
-        className="mt-4 w-full px-4 py-2 bg-paw text-white rounded font-semibold hover:bg-paw-dark disabled:opacity-60 transition"
+        className="mt-4 w-full px-4 py-2 bg-accent text-paper rounded font-medium hover:bg-ink transition-colors disabled:opacity-60"
       >
         {loading ? "Saving…" : "Save pet"}
       </button>

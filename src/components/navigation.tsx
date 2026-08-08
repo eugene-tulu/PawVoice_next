@@ -11,32 +11,39 @@ export default function Navigation() {
     router.push("/login");
   };
 
+  const links = [
+    { href: "/dashboard", label: "Dashboard" },
+    { href: "/settings", label: "Settings" },
+  ];
+
   return (
-    <nav className="px-4 py-3 border-b border-amber-100 dark:border-amber-900/30">
-      <div className="max-w-4xl mx-auto flex items-center justify-between">
-        <Link href="/dashboard" className="text-xl font-bold text-amber-800 dark:text-amber-300 no-underline">
+    <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-50">
+      <div
+        className="inline-flex items-center gap-1 px-2 py-1.5 bg-paper/80 dark:bg-paper/10 backdrop-blur-sm border border-rule rounded-full shadow-md"
+      >
+        <Link
+          href="/dashboard"
+          className="font-display text-lg font-semibold text-ink px-2 py-1"
+        >
           PawVoice
         </Link>
-        <div className="flex items-center gap-4 text-sm">
+        <div className="h-4 w-px bg-rule mx-1" />
+        {links.map((link) => (
           <Link
-            href="/dashboard"
-            className="text-gray-700 dark:text-gray-300 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
+            key={link.href}
+            href={link.href}
+            className="text-sm font-medium text-ink-2 hover:text-ink px-3 py-1 rounded-full transition-colors duration-150"
           >
-            Dashboard
+            {link.label}
           </Link>
-          <Link
-            href="/settings"
-            className="text-gray-700 dark:text-gray-300 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
-          >
-            Settings
-          </Link>
-          <button
-            onClick={handleSignOut}
-            className="text-gray-700 dark:text-gray-300 hover:text-amber-700 dark:hover:text-amber-400 transition-colors underline decoration-amber-700/30 decoration-offset-2 hover:decoration-amber-700"
-          >
-            Sign out
-          </button>
-        </div>
+        ))}
+        <div className="h-4 w-px bg-rule mx-1" />
+        <button
+          onClick={handleSignOut}
+          className="text-xs font-medium text-muted hover:text-ink px-3 py-1 rounded-full transition-colors duration-150"
+        >
+          Sign out
+        </button>
       </div>
     </nav>
   );

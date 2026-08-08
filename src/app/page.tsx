@@ -2,103 +2,122 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-cream dark:bg-cream-dark">
-      <div className="max-w-4xl mx-auto px-4 py-20">
-        <header className="mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold text-paw mb-4">
-            PawVoice
-          </h1>
-          <p className="text-lg text-gray-700 dark:text-gray-300 max-w-2xl">
-            A voice-first activity logger. Call from the road, after a walk, or
-            from the vet — tell PawVoice what happened and it logs it for you.
-            No typing, no apps, no forgetting.
-          </p>
-        </header>
+    <div className="min-h-screen bg-paper text-ink font-body">
+      <header className="max-w-2xl mx-auto px-6 py-16 md:py-24">
+        <h1 className="font-display text-display font-black tracking-tight text-ink mb-6 leading-tight">
+          PawVoice
+        </h1>
+        <p className="text-lg text-ink-2 max-w-xl">
+          A voice-first activity logger for pet sitters and owners. Call from the
+          road, after a walk, or from the vet — tell PawVoice what happened and
+          it records the entry for everyone to see.
+        </p>
+        <p className="text-sm text-muted mt-4">
+          No typing. No apps. No forgetting.
+        </p>
+      </header>
 
-        <div className="mb-16">
-          <h2 className="text-2xl font-semibold text-gray-800 dark:text-white mb-6">How it works</h2>
-          <ol className="space-y-4 text-gray-700 dark:text-gray-300">
-            <li className="flex gap-3">
-              <span className="text-paw font-bold">1</span>
-              <span>
-                <strong>Dial your Vapi number.</strong> The voice assistant greets
-                you and asks which pet you&apos;re logging for.
-              </span>
-            </li>
-            <li className="flex gap-3">
-              <span className="text-paw font-bold">2</span>
-              <span>
-                <strong>Speak naturally.</strong> Say things like &quot;Buster had a
-                30 minute walk and seemed energetic&quot; or &quot;Whiskers took her
-                medication.&quot;
-              </span>
-            </li>
-            <li className="flex gap-3">
-              <span className="text-paw font-bold">3</span>
-              <span>
-                <strong>Activity is logged instantly.</strong> Your entry appears
-                in the dashboard with the exact words you spoke.
-              </span>
-            </li>
-          </ol>
-        </div>
+      <main className="max-w-2xl mx-auto px-6 py-12">
+        <h2 className="font-display text-3xl font-semibold text-ink mb-6">
+          How it works
+        </h2>
 
-        <div className="border-t border-amber-100 dark:border-amber-900/30 pt-8 mb-16">
-          <div className="space-y-6">
-            <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">Pricing</h2>
-            <p className="text-gray-700 dark:text-gray-300 max-w-2xl">
-              Pay as you go. Calls cost <strong>$0.18 per minute</strong>. Buy
-              credit packs that never expire:
+        <ol className="space-y-6">
+          <li>
+            <strong className="text-ink">1. Dial your assigned number.</strong>
+            <p className="text-ink-2 mt-1">
+              The voice assistant greets you and asks which pet you&apos;re
+              logging for.
             </p>
-            <table className="text-left text-sm">
-              <thead>
-                <tr>
-                  <th className="pb-2 text-gray-800 dark:text-white">Pack</th>
-                  <th className="pb-2 text-gray-800 dark:text-white">Approx. minutes</th>
-                  <th className="pb-2 text-gray-800 dark:text-white">Price</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-t border-amber-100 dark:border-amber-900/30">
-                  <td className="py-2">Small</td>
-                  <td className="py-2">55 min</td>
-                  <td className="py-2">$10</td>
-                </tr>
-                <tr className="border-t border-amber-100 dark:border-amber-900/30">
-                  <td className="py-2">Medium</td>
-                  <td className="py-2">139 min</td>
-                  <td className="py-2">$25</td>
-                </tr>
-                <tr className="border-t border-amber-100 dark:border-amber-900/30">
-                  <td className="py-2">Large</td>
-                  <td className="py-2">333 min</td>
-                  <td className="py-2">$60</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+          </li>
+          <li>
+            <strong className="text-ink">2. Speak naturally.</strong>
+            <p className="text-ink-2 mt-1">
+              Say things like &ldquo;Buster had a 30 minute walk and seemed
+              energetic&rdquo; or &ldquo;Whiskers took her medication.&rdquo;
+            </p>
+          </li>
+          <li>
+            <strong className="text-ink">3. Logged instantly.</strong>
+            <p className="text-ink-2 mt-1">
+              Your entry appears in the dashboard with the exact words you
+              spoke, attributed to the right pet.
+            </p>
+          </li>
+          <li>
+            <strong className="text-ink">4. Edit within 24 hours.</strong>
+            <p className="text-ink-2 mt-1">
+              Mistakes happen — the original logger can correct notes within a
+              day of entry.
+            </p>
+          </li>
+        </ol>
 
-        <div className="flex gap-4">
+        <hr className="my-12 border-rule" />
+
+        <section className="mb-12">
+          <h3 className="font-display text-3xl font-semibold text-ink mb-4">
+            Pricing
+          </h3>
+          <p className="text-ink-2 mb-6">
+            Pay as you go. Calls cost <strong className="text-ink">$0.18 per minute</strong>. Credit
+            packs never expire:
+          </p>
+          <table className="w-full text-left">
+            <thead>
+              <tr>
+                <th className="pb-3 text-xs font-medium text-muted uppercase tracking-wider">Pack</th>
+                <th className="pb-3 text-xs font-medium text-muted uppercase tracking-wider">Approx. minutes</th>
+                <th className="pb-3 text-xs font-medium text-muted uppercase tracking-wider text-right">Price</th>
+              </tr>
+            </thead>
+            <tbody className="border-t border-rule-2">
+              <tr className="border-t border-rule-2">
+                <td className="py-3 font-medium">Small</td>
+                <td className="py-3 text-ink-2">55 min</td>
+                <td className="py-3 text-right">— $10</td>
+              </tr>
+              <tr className="border-t border-rule-2">
+                <td className="py-3 font-medium">Medium</td>
+                <td className="py-3 text-ink-2">139 min</td>
+                <td className="py-3 text-right">— $25</td>
+              </tr>
+              <tr className="border-t border-rule-2">
+                <td className="py-3 font-medium">Large</td>
+                <td className="py-3 text-ink-2">333 min</td>
+                <td className="py-3 text-right">— $60</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <div className="flex gap-6">
           <Link
             href="/register"
-            className="px-6 py-3 bg-paw text-white rounded-full font-semibold hover:bg-paw-dark transition"
+            className="inline-block px-6 py-2.5 bg-accent text-paper font-medium rounded-full hover:bg-ink transition-colors duration-150"
           >
             Get started
           </Link>
           <Link
             href="/login"
-            className="px-6 py-3 text-paw font-semibold hover:text-paw-dark transition"
+            className="inline-block px-6 py-2.5 text-ink font-medium hover:text-accent transition-colors duration-150"
           >
             Sign in
           </Link>
         </div>
 
-        <p className="mt-12 text-xs text-gray-500">
+        <p className="mt-12 text-xs text-muted">
           Built with Convex + Better Auth + Vapi. Calls are $0.18/min. Credit
           packs never expire.
         </p>
-      </div>
+      </main>
+
+      <footer className="max-w-2xl mx-auto px-6 pb-12">
+        <p className="text-sm text-muted">
+          PawVoice records activities as spoken. It is an activity log, not
+          medical advice. Contact a veterinarian for health concerns.
+        </p>
+      </footer>
     </div>
   );
 }
