@@ -3,7 +3,12 @@ import { v } from "convex/values";
 import { mutation, query, action, type ActionCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import { sendEmail, inviteAcceptUrl } from "./lib/email";
+import {
+  sendEmail,
+  inviteAcceptUrl,
+  inviteEmailHtml,
+  inviteEmailText,
+} from "./lib/email";
 
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -43,12 +48,11 @@ export const create = action({
     await sendEmail({
       to: email,
       subject: "You've been invited to view a pet in PawVoice",
-      html: `
-        <h2>PawVoice invitation</h2>
-        <p>You've been invited to follow a pet's activity log.</p>
-        <p><a href="${url}">Open your invite</a></p>
-        <p>This link expires in 7 days.</p>
-      `,
+      html: inviteEmailHtml(url),
+      text: inviteEmailText(url),
+      // One invite email per token; dedupe retries of the same invite.
+      idempotencyKey: `invite-email/${token}`,
+      tags: [{ name: "email_type", value: "invite" }],
     });
     return inviteId;
   },

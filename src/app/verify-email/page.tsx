@@ -5,6 +5,7 @@ import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { authClient } from "@/lib/auth-client";
 
 export default function VerifyEmailPage() {
   const authStatus = useQuery(api.auth.getAuthStatus);
@@ -22,17 +23,16 @@ export default function VerifyEmailPage() {
     if (!authStatus?.email) return;
     setSending(true);
     try {
-      const response = await fetch("/api/auth/resend-verification-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: authStatus.email }),
+      const { error } = await authClient.sendVerificationEmail({
+        email: authStatus.email,
+        callbackURL: "/dashboard",
       });
 
-      if (response.ok) {
+      if (!error) {
         setSent(true);
         setTimeout(() => setSent(false), 5000);
       } else {
-        alert("Failed to resend email. Please try again.");
+        alert(error.message ?? "Failed to resend email. Please try again.");
       }
     } catch {
       alert("Network error. Please check your connection.");

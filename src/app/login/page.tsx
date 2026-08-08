@@ -65,15 +65,23 @@ export default function LoginPage() {
           </p>
         )}
 
-        <p className="text-center text-sm text-muted mt-6">
-          No account?{" "}
+        <div className="flex justify-between items-center mt-4 text-sm">
           <Link
-            href="/register"
+            href="/forgot-password"
             className="text-ink font-medium hover:text-accent transition-colors"
           >
-            Sign up
+            Forgot password?
           </Link>
-        </p>
+          <span className="text-muted">
+            No account?{" "}
+            <Link
+              href="/register"
+              className="text-ink font-medium hover:text-accent transition-colors"
+            >
+              Sign up
+            </Link>
+          </span>
+        </div>
       </form>
     </div>
   );

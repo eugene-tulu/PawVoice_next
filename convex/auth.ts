@@ -5,7 +5,13 @@ import { components } from "./_generated/api";
 import { DataModel } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 import { betterAuth } from "better-auth";
-import { sendEmail, verifyEmailHtml, resetPasswordHtml } from "./lib/email";
+import {
+  sendEmail,
+  verifyEmailHtml,
+  verifyEmailText,
+  resetPasswordHtml,
+  resetPasswordText,
+} from "./lib/email";
 
 const siteUrl = process.env.SITE_URL ?? "http://localhost:3000";
 
@@ -25,6 +31,14 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
           to: user.email,
           subject: "Reset your password",
           html: resetPasswordHtml(url),
+          text: resetPasswordText(url),
+          // New reset link each request: key includes a timestamp so retries
+          // don't collapse but duplicate requests still dedupe.
+          idempotencyKey: `password-reset/${user.id}/${Date.now()}`,
+          tags: [
+            { name: "email_type", value: "password_reset" },
+            { name: "user_id", value: user.id },
+          ],
         });
       },
     },
@@ -34,6 +48,13 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
           to: user.email,
           subject: "Verify your email",
           html: verifyEmailHtml(url, user.email),
+          text: verifyEmailText(url, user.email),
+          // One pending verification per user at a time.
+          idempotencyKey: `verification-email/${user.id}`,
+          tags: [
+            { name: "email_type", value: "email_verification" },
+            { name: "user_id", value: user.id },
+          ],
         });
       },
       sendOnSignUp: true,

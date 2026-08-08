@@ -2,7 +2,12 @@
 import { v } from "convex/values";
 import { internalAction, type ActionCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { sendEmail, appUrl } from "./lib/email";
+import {
+  sendEmail,
+  appUrl,
+  lowBalanceHtml,
+  lowBalanceText,
+} from "./lib/email";
 import { dodoCheckoutUrl } from "./dodo";
 
 export const CENTS_PER_MIN = 18;
@@ -74,14 +79,17 @@ export const recordBilling = internalAction({
             await sendEmail({
               to: user.email,
               subject: "PawVoice: low balance — top up your credits",
-              html: `
-                <h2>PawVoice balance is low</h2>
-                <p>Your call credits are below $3.</p>
-                <p><a href="${checkoutUrl}">Top up $10 credits</a></p>
-                <p>You can also manage payment methods in your <a href="${appUrl(
-                  "/dashboard?billing=portal"
-                )}">billing portal</a>.</p>
-              `,
+              html: lowBalanceHtml(
+                checkoutUrl,
+                appUrl("/dashboard?billing=portal")
+              ),
+              text: lowBalanceText(
+                checkoutUrl,
+                appUrl("/dashboard?billing=portal")
+              ),
+              // One low-balance notice per call that triggered the refill.
+              idempotencyKey: `low-balance/${user._id}/${callId}`,
+              tags: [{ name: "email_type", value: "low_balance" }],
             });
           }
         } catch (e) {
