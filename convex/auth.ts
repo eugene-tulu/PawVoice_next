@@ -27,7 +27,7 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
       enabled: true,
       requireEmailVerification: true,
       sendResetPassword: async ({ user, url }) => {
-        void sendEmail({
+        await sendEmail({
           to: user.email,
           subject: "Reset your password",
           html: resetPasswordHtml(url),
@@ -44,7 +44,7 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
     },
     emailVerification: {
       sendVerificationEmail: async ({ user, url }) => {
-        void sendEmail({
+        await sendEmail({
           to: user.email,
           subject: "Verify your email",
           html: verifyEmailHtml(url, user.email),
