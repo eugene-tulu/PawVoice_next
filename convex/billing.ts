@@ -8,7 +8,7 @@ import {
   lowBalanceHtml,
   lowBalanceText,
 } from "./lib/email";
-import { dodoCheckoutUrl } from "./dodo";
+import { creemCheckoutUrl } from "./dodo";
 
 export const CENTS_PER_MIN = 18;
 export const BUFFER_CENTS = 500; // $5 overdraft: calls never cut off; next call blocks only at <-500
@@ -60,44 +60,56 @@ export const recordBilling = internalAction({
       });
 
       // Best-effort auto-refill (v1: emails a top-up checkout link; silent
-      // saved-card charging is deferred to v1.1).
+      // saved-card charging is deferred to v1.1). Delegated to a separate
+      // action so this handler's type graph stays clear of the checkout module.
       if (
         user &&
         user.email &&
-        user.credits < AUTO_REFILL_THRESHOLD_CENTS &&
-        process.env.DODO_API_KEY
+        user.credits < AUTO_REFILL_THRESHOLD_CENTS
       ) {
-        const pack = MIN_TOPUP_CENTS;
-        try {
-          const checkoutUrl = await dodoCheckoutUrl({
-            packCents: pack,
-            email: user.email,
-            name: user.name ?? undefined,
-            returnUrl: appUrl("/dashboard?billing=credits"),
-          });
-          if (checkoutUrl) {
-            await sendEmail({
-              to: user.email,
-              subject: "PawVoice: low balance — top up your credits",
-              html: lowBalanceHtml(
-                checkoutUrl,
-                appUrl("/dashboard?billing=portal")
-              ),
-              text: lowBalanceText(
-                checkoutUrl,
-                appUrl("/dashboard?billing=portal")
-              ),
-              // One low-balance notice per call that triggered the refill.
-              idempotencyKey: `low-balance/${user._id}/${callId}`,
-              tags: [{ name: "email_type", value: "low_balance" }],
-            });
-          }
-        } catch (e) {
-          console.error("Auto-refill checkout failed:", e);
-        }
+        void ctx.runAction(internal.billing.sendLowBalanceTopUp, {
+          userId: cs.userId,
+          email: user.email,
+          name: user.name ?? undefined,
+          callId,
+        });
       }
     }
 
     return { ok: true, costCents, durationSec };
+  },
+});
+
+// Best-effort auto-refill. Runs as its own action (kept separate from
+// recordBilling) so the deep ctx.runQuery/runMutation chain there doesn't pull
+// the Creem checkout module into its type-graph — that previously tripped a
+// TS2589 cascade. Emails a top-up checkout link; silent saved-card charging is
+// deferred to v1.1.
+export const sendLowBalanceTopUp = internalAction({
+  args: { userId: v.id("users"), email: v.string(), name: v.optional(v.string()), callId: v.string() },
+  handler: async (_ctx: ActionCtx, { email, name, callId }): Promise<void> => {
+    if (!process.env.CREEM_API_KEY) return;
+    const pack = MIN_TOPUP_CENTS;
+    try {
+      const checkoutUrl = await creemCheckoutUrl({
+        packCents: pack,
+        email,
+        name,
+        returnUrl: appUrl("/dashboard?billing=credits"),
+      });
+      if (checkoutUrl) {
+        await sendEmail({
+          to: email,
+          subject: "PawVoice: low balance — top up your credits",
+          html: lowBalanceHtml(checkoutUrl, appUrl("/dashboard?billing=portal")),
+          text: lowBalanceText(checkoutUrl, appUrl("/dashboard?billing=portal")),
+          // One low-balance notice per call that triggered the refill.
+          idempotencyKey: `low-balance/${callId}`,
+          tags: [{ name: "email_type", value: "low_balance" }],
+        });
+      }
+    } catch (e) {
+      console.error("Auto-refill checkout failed:", e);
+    }
   },
 });

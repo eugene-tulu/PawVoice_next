@@ -2,7 +2,7 @@
 import { httpRouter } from "convex/server";
 import { authComponent, createAuth } from "./auth";
 import { vapiWebhook } from "./vapi";
-import { dodoWebhook } from "./dodoWebhook";
+import { creemWebhook } from "./creemWebhook";
 
 const http = httpRouter();
 
@@ -16,11 +16,11 @@ http.route({
   handler: vapiWebhook,
 });
 
-// Dodo Payments webhook (payment succeeded => add credits).
+// Creem webhook (checkout.completed => add credits).
 http.route({
-  path: "/dodopayments-webhook",
+  path: "/creem-webhook",
   method: "POST",
-  handler: dodoWebhook,
+  handler: creemWebhook,
 });
 
 export default http;

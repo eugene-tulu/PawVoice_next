@@ -2,10 +2,10 @@
 import { v } from "convex/values";
 import { action, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { CREDIT_PACKS, creditPackName, dodoCheckoutUrl, dodoCustomerPortalUrl } from "./dodo";
+import { CREDIT_PACKS, creditPackName, creemCheckoutUrl, creemCustomerPortalUrl } from "./checkout";
 import { appUrl } from "./lib/email";
 
-// Public: start a Pay-As-You-Go credit checkout on Dodo Payments.
+// Public: start a Pay-As-You-Go credit checkout (Creem).
 export const createCreditPack = action({
   args: { packCents: v.number() },
   handler: async (ctx, { packCents }) => {
@@ -19,7 +19,7 @@ export const createCreditPack = action({
     });
     if (!user) throw new Error("User not found");
 
-    const checkout_url = await dodoCheckoutUrl({
+    const checkout_url = await creemCheckoutUrl({
       packCents,
       email: user.email,
       name: user.name ?? undefined,
@@ -29,7 +29,7 @@ export const createCreditPack = action({
   },
 });
 
-// Public: link to the Dodo customer self-service portal (saved cards, history).
+// Public: link to the customer self-service portal (Creem).
 export const billingPortal = action({
   args: {},
   handler: async (ctx) => {
@@ -42,10 +42,9 @@ export const billingPortal = action({
     if (!user.dodoCustomerId) {
       throw new Error("No billing customer on record yet; purchase credits first.");
     }
-    const portal_url = await dodoCustomerPortalUrl({
+    const portal_url = await creemCustomerPortalUrl({
       customerId: user.dodoCustomerId,
       returnUrl: appUrl("/dashboard?billing=portal"),
-      sendEmail: true,
     });
     return { portal_url };
   },
