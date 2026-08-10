@@ -2,23 +2,57 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState("");
+  const [unverified, setUnverified] = useState(false);
+  const [sending, setSending] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMsg("");
+    setUnverified(false);
     const { error } = await authClient.signIn.email({
       email,
       password,
       callbackURL: "/dashboard",
     });
-    if (error) setMsg(error.message ?? "Failed to sign in");
-    else setMsg("Signed in – redirecting…");
+    if (error) {
+      if (
+        error.code === "EMAIL_NOT_VERIFIED" ||
+        /not verified/i.test(error.message ?? "")
+      ) {
+        setUnverified(true);
+      } else {
+        setMsg(error.message ?? "Failed to sign in");
+      }
+    } else {
+      router.push("/dashboard");
+    }
+  };
+
+  const handleResend = async () => {
+    setSending(true);
+    try {
+      const { error } = await authClient.sendVerificationEmail({
+        email,
+        callbackURL: "/dashboard",
+      });
+      if (!error) {
+        setMsg("Verification email resent — check your inbox, then sign in.");
+      } else {
+        setMsg(error.message ?? "Failed to resend. Please try again.");
+      }
+    } catch {
+      setMsg("Network error. Please check your connection.");
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -56,13 +90,31 @@ export default function LoginPage() {
           Sign in
         </button>
 
-        {msg && (
-          <p
-            className="text-center text-sm mt-4"
-            style={{ color: msg.includes("Signed in") ? "var(--color-ink)" : "var(--color-accent)" }}
-          >
-            {msg}
-          </p>
+        {unverified ? (
+          <div className="mt-4 text-center">
+            <p className="text-sm text-accent mb-3">
+              Your email isn&apos;t verified yet. Check your inbox for the
+              verification link.
+            </p>
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={sending}
+              className="w-full px-4 py-2.5 bg-accent text-paper rounded font-medium hover:bg-ink transition-colors disabled:opacity-60 mb-2"
+            >
+              {sending ? "Sending…" : "Resend verification email"}
+            </button>
+            {msg && <p className="text-sm text-muted">{msg}</p>}
+          </div>
+        ) : (
+          msg && (
+            <p
+              className="text-center text-sm mt-4"
+              style={{ color: "var(--color-accent)" }}
+            >
+              {msg}
+            </p>
+          )
         )}
 
         <div className="flex justify-between items-center mt-4 text-sm">
