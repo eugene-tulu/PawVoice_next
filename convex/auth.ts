@@ -43,14 +43,16 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
       },
     },
     emailVerification: {
-      sendVerificationEmail: async ({ user, url }) => {
+      sendVerificationEmail: async ({ user, url, token }) => {
         await sendEmail({
           to: user.email,
           subject: "Verify your email",
           html: verifyEmailHtml(url, user.email),
           text: verifyEmailText(url, user.email),
-          // One pending verification per user at a time.
-          idempotencyKey: `verification-email/${user.id}`,
+          // Key includes the verification token so each new verification
+          // (incl. user-initiated resends, which mint a new token) gets its
+          // own send, while automatic retries with the same token dedupe.
+          idempotencyKey: `verification-email/${user.id}/${token}`,
           tags: [
             { name: "email_type", value: "email_verification" },
             { name: "user_id", value: user.id },
