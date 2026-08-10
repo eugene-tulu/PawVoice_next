@@ -3,6 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { AuthShell, AuthNotice } from "@/components/auth-shell";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -28,76 +29,67 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-paper p-4">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-sm bg-paper-2 border border-rule rounded-xl p-8 shadow-md"
-      >
-        <h1 className="font-display text-2xl font-black text-ink text-center mb-2">
-          Forgot password
-        </h1>
-        <p className="text-center text-sm text-muted mb-6">
-          We&apos;ll email you a link to reset your password.
-        </p>
-
-        {status === "sent" ? (
-          <div className="text-center">
-            <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-xl">✉️</span>
-            </div>
-            <p className="text-ink-2 text-sm mb-6">
-              If an account exists for{" "}
-              <span className="font-mono bg-muted/5 px-2 py-1 rounded">
-                {email}
-              </span>
-              , a reset link is on its way. Check your inbox (and spam folder).
-            </p>
-            <button
-              type="button"
-              onClick={() => router.push("/login")}
-              className="w-full px-4 py-2.5 bg-accent text-paper rounded font-medium hover:bg-ink transition-colors"
-            >
-              Back to sign in
-            </button>
-          </div>
-        ) : (
-          <>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              className="w-full px-3 py-2 border border-rule rounded text-sm bg-paper text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-focus mb-3"
-              required
-            />
-
-            <button
-              type="submit"
-              disabled={status === "sending"}
-              className="w-full px-4 py-2.5 bg-accent text-paper rounded font-medium hover:bg-ink transition-colors mt-2 disabled:opacity-60"
-            >
-              {status === "sending" ? "Sending…" : "Send reset link"}
-            </button>
-
-            {status === "error" && (
-              <p className="text-center text-sm mt-4" style={{ color: "var(--color-accent)" }}>
-                {msg}
-              </p>
-            )}
-          </>
-        )}
-
-        <p className="text-center text-sm text-muted mt-6">
-          Remembered it?{" "}
+  if (status === "sent") {
+    return (
+      <AuthShell
+        title="Check your inbox"
+        subtitle="If that email has an account, a reset link is on its way."
+        footer={
           <Link
             href="/login"
             className="text-ink font-medium hover:text-accent transition-colors"
           >
-            Sign in
+            Back to sign in
           </Link>
+        }
+      >
+        <p className="text-center text-ink-2 text-sm mb-1">
+          We sent a reset link to{" "}
+          <span className="font-mono bg-muted/5 px-2 py-1 rounded">{email}</span>
+          . Check your inbox (and spam folder).
         </p>
+        <button
+          type="button"
+          onClick={() => router.push("/login")}
+          className="w-full px-4 py-2.5 mt-4 bg-accent text-paper rounded-lg font-medium hover:bg-ink transition-colors"
+        >
+          Back to sign in
+        </button>
+      </AuthShell>
+    );
+  }
+
+  return (
+    <AuthShell
+      title="Forgot password"
+      subtitle="We'll email you a link to reset your password."
+      footer={
+        <Link
+          href="/login"
+          className="text-ink font-medium hover:text-accent transition-colors"
+        >
+          Back to sign in
+        </Link>
+      }
+    >
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="you@example.com"
+          className="w-full px-3 py-2 border border-rule rounded-lg text-sm bg-paper text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-focus"
+          required
+        />
+        <button
+          type="submit"
+          disabled={status === "sending"}
+          className="w-full px-4 py-2.5 mt-2 bg-accent text-paper rounded-lg font-medium hover:bg-ink transition-colors disabled:opacity-60"
+        >
+          {status === "sending" ? "Sending…" : "Send reset link"}
+        </button>
       </form>
-    </div>
+      {status === "error" && <AuthNotice tone="error">{msg}</AuthNotice>}
+    </AuthShell>
   );
 }

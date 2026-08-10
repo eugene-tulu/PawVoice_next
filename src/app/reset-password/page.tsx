@@ -3,6 +3,7 @@ import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { AuthShell, AuthNotice } from "@/components/auth-shell";
 
 function ResetPasswordForm() {
   const [password, setPassword] = useState("");
@@ -45,41 +46,48 @@ function ResetPasswordForm() {
 
   if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-paper p-4">
-        <div className="text-center p-6 max-w-sm">
-          <h1 className="font-display text-2xl font-black text-ink mb-2">
-            Invalid link
-          </h1>
-          <p className="text-ink-2 mb-6 text-sm">
-            This password reset link is missing its token or has expired.
-          </p>
+      <AuthShell
+        title="Invalid link"
+        subtitle="This password reset link is missing its token or has expired."
+        footer={
           <Link
             href="/forgot-password"
-            className="px-6 py-3 bg-accent text-paper rounded-full font-medium hover:bg-ink transition-colors inline-block"
+            className="text-ink font-medium hover:text-accent transition-colors"
           >
             Request a new link
           </Link>
-        </div>
-      </div>
+        }
+      >
+        <Link
+          href="/forgot-password"
+          className="block w-full px-4 py-2.5 bg-accent text-paper rounded-lg font-medium hover:bg-ink transition-colors text-center"
+        >
+          Request a new link
+        </Link>
+      </AuthShell>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-paper p-4">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-sm bg-paper-2 border border-rule rounded-xl p-8 shadow-md"
-      >
-        <h1 className="font-display text-2xl font-black text-ink text-center mb-6">
-          Reset password
-        </h1>
-
+    <AuthShell
+      title="Reset password"
+      subtitle="Choose a new password for your account."
+      footer={
+        <Link
+          href="/login"
+          className="text-ink font-medium hover:text-accent transition-colors"
+        >
+          Back to sign in
+        </Link>
+      }
+    >
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="New password (min 8)"
-          className="w-full px-3 py-2 border border-rule rounded text-sm bg-paper text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-focus mb-3"
+          className="w-full px-3 py-2 border border-rule rounded-lg text-sm bg-paper text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-focus"
           required
         />
         <input
@@ -87,39 +95,24 @@ function ResetPasswordForm() {
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
           placeholder="Confirm new password"
-          className="w-full px-3 py-2 border border-rule rounded text-sm bg-paper text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-focus mb-3"
+          className="w-full px-3 py-2 border border-rule rounded-lg text-sm bg-paper text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-focus"
           required
         />
-
         <button
           type="submit"
           disabled={status === "saving"}
-          className="w-full px-4 py-2.5 bg-accent text-paper rounded font-medium hover:bg-ink transition-colors mt-2 disabled:opacity-60"
+          className="w-full px-4 py-2.5 mt-2 bg-accent text-paper rounded-lg font-medium hover:bg-ink transition-colors disabled:opacity-60"
         >
           {status === "saving" ? "Saving…" : "Set new password"}
         </button>
-
-        {status === "done" && (
-          <p className="text-center text-sm mt-4" style={{ color: "var(--color-ink)" }}>
-            Password updated — redirecting to sign in…
-          </p>
-        )}
-        {status === "error" && (
-          <p className="text-center text-sm mt-4" style={{ color: "var(--color-accent)" }}>
-            {msg}
-          </p>
-        )}
-
-        <p className="text-center text-sm text-muted mt-6">
-          <Link
-            href="/login"
-            className="text-ink font-medium hover:text-accent transition-colors"
-          >
-            Back to sign in
-          </Link>
-        </p>
       </form>
-    </div>
+      {status === "done" && (
+        <AuthNotice tone="success">
+          Password updated — taking you to sign in…
+        </AuthNotice>
+      )}
+      {status === "error" && <AuthNotice tone="error">{msg}</AuthNotice>}
+    </AuthShell>
   );
 }
 

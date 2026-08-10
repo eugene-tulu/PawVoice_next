@@ -2,8 +2,8 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { AuthShell, AuthNotice } from "@/components/auth-shell";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
@@ -11,7 +11,6 @@ export default function RegisterPage() {
   const [msg, setMsg] = useState("");
   const [created, setCreated] = useState(false);
   const [sending, setSending] = useState(false);
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,88 +51,45 @@ export default function RegisterPage() {
 
   if (created) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-paper p-4">
-        <div className="w-full max-w-sm bg-paper-2 border border-rule rounded-xl p-8 shadow-md text-center">
-          <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-xl">✉️</span>
-          </div>
-          <h1 className="font-display text-2xl font-black text-ink mb-2">
-            Verify your email
-          </h1>
-          <p className="text-ink-2 text-sm mb-1">
-            We sent a verification link to{" "}
-            <span className="font-mono bg-muted/5 px-2 py-1 rounded">
-              {email}
-            </span>
-          </p>
-          <p className="text-muted text-sm mb-6">
-            Check your inbox (and spam folder), then sign in.
-          </p>
-          <button
-            type="button"
-            onClick={handleResend}
-            disabled={sending}
-            className="w-full px-4 py-2.5 bg-accent text-paper rounded font-medium hover:bg-ink transition-colors disabled:opacity-60 mb-3"
-          >
-            {sending ? "Sending…" : "Resend verification email"}
-          </button>
-          {msg && <p className="text-sm text-muted mb-3">{msg}</p>}
-          <Link
-            href="/login"
-            className="text-ink font-medium hover:text-accent transition-colors"
-          >
-            Go to Sign In
-          </Link>
-        </div>
-      </div>
+      <AuthShell
+        title="Verify your email"
+        subtitle="We just sent you a verification link."
+        footer={
+          <>
+            Already verified?{" "}
+            <Link
+              href="/login"
+              className="text-ink font-medium hover:text-accent transition-colors"
+            >
+              Sign in
+            </Link>
+          </>
+        }
+      >
+        <p className="text-center text-ink-2 text-sm mb-1">
+          Check{" "}
+          <span className="font-mono bg-muted/5 px-2 py-1 rounded">{email}</span>{" "}
+          (and your spam folder) for the link, then sign in.
+        </p>
+        <button
+          type="button"
+          onClick={handleResend}
+          disabled={sending}
+          className="w-full px-4 py-2.5 mt-4 bg-accent text-paper rounded-lg font-medium hover:bg-ink transition-colors disabled:opacity-60"
+        >
+          {sending ? "Sending…" : "Resend verification email"}
+        </button>
+        {msg && <AuthNotice tone="info">{msg}</AuthNotice>}
+      </AuthShell>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-paper p-4">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-sm bg-paper-2 border border-rule rounded-xl p-8 shadow-md"
-      >
-        <h1 className="font-display text-2xl font-black text-ink text-center mb-6">
-          PawVoice
-        </h1>
-
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@example.com"
-          className="w-full px-3 py-2 border border-rule rounded text-sm bg-paper text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-focus mb-3"
-          required
-        />
-
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="password (min 8)"
-          className="w-full px-3 py-2 border border-rule rounded text-sm bg-paper text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-focus mb-3"
-          required
-        />
-
-        <button
-          type="submit"
-          className="w-full px-4 py-2.5 bg-accent text-paper rounded font-medium hover:bg-ink transition-colors mt-2"
-        >
-          Create account
-        </button>
-
-        {msg && (
-          <p
-            className="text-center text-sm mt-4"
-            style={{ color: "var(--color-accent)" }}
-          >
-            {msg}
-          </p>
-        )}
-
-        <p className="text-center text-sm text-muted mt-6">
+    <AuthShell
+      title="Create account"
+      subtitle="Start logging your pet's day with voice."
+      footer={
+        <>
           Already have an account?{" "}
           <Link
             href="/login"
@@ -141,8 +97,37 @@ export default function RegisterPage() {
           >
             Sign in
           </Link>
-        </p>
+        </>
+      }
+    >
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col gap-3"
+      >
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="you@example.com"
+          className="w-full px-3 py-2 border border-rule rounded-lg text-sm bg-paper text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-focus"
+          required
+        />
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="password (min 8)"
+          className="w-full px-3 py-2 border border-rule rounded-lg text-sm bg-paper text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-focus"
+          required
+        />
+        <button
+          type="submit"
+          className="w-full px-4 py-2.5 mt-2 bg-accent text-paper rounded-lg font-medium hover:bg-ink transition-colors"
+        >
+          Create account
+        </button>
       </form>
-    </div>
+      {msg && <AuthNotice tone="error">{msg}</AuthNotice>}
+    </AuthShell>
   );
 }

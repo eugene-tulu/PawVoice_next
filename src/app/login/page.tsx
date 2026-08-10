@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { AuthShell, AuthNotice } from "@/components/auth-shell";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -55,86 +56,96 @@ export default function LoginPage() {
     }
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-paper p-4">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-sm bg-paper-2 border border-rule rounded-xl p-8 shadow-md"
-      >
-        <h1 className="font-display text-2xl font-black text-ink text-center mb-6">
-          PawVoice
-        </h1>
-
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@example.com"
-          className="w-full px-3 py-2 border border-rule rounded text-sm bg-paper text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-focus mb-3"
-          required
-        />
-
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="password (min 8)"
-          className="w-full px-3 py-2 border border-rule rounded text-sm bg-paper text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-focus mb-3"
-          required
-        />
-
-        <button
-          type="submit"
-          className="w-full px-4 py-2.5 bg-accent text-paper rounded font-medium hover:bg-ink transition-colors mt-2"
-        >
-          Sign in
-        </button>
-
-        {unverified ? (
-          <div className="mt-4 text-center">
-            <p className="text-sm text-accent mb-3">
-              Your email isn&apos;t verified yet. Check your inbox for the
-              verification link.
-            </p>
-            <button
-              type="button"
-              onClick={handleResend}
-              disabled={sending}
-              className="w-full px-4 py-2.5 bg-accent text-paper rounded font-medium hover:bg-ink transition-colors disabled:opacity-60 mb-2"
-            >
-              {sending ? "Sending…" : "Resend verification email"}
-            </button>
-            {msg && <p className="text-sm text-muted">{msg}</p>}
-          </div>
-        ) : (
-          msg && (
-            <p
-              className="text-center text-sm mt-4"
-              style={{ color: "var(--color-accent)" }}
-            >
-              {msg}
-            </p>
-          )
-        )}
-
-        <div className="flex justify-between items-center mt-4 text-sm">
-          <Link
-            href="/forgot-password"
-            className="text-ink font-medium hover:text-accent transition-colors"
-          >
-            Forgot password?
-          </Link>
-          <span className="text-muted">
-            No account?{" "}
+  if (unverified) {
+    return (
+      <AuthShell
+        title="Verify your email"
+        subtitle="Your account exists but its email isn't verified yet."
+        footer={
+          <>
+            Different account?{" "}
             <Link
               href="/register"
               className="text-ink font-medium hover:text-accent transition-colors"
             >
               Sign up
             </Link>
-          </span>
-        </div>
+          </>
+        }
+      >
+        <p className="text-center text-ink-2 text-sm mb-4">
+          Check your inbox for the verification link, then sign in below.
+        </p>
+        <button
+          type="button"
+          onClick={handleResend}
+          disabled={sending}
+          className="w-full px-4 py-2.5 bg-accent text-paper rounded-lg font-medium hover:bg-ink transition-colors disabled:opacity-60"
+        >
+          {sending ? "Sending…" : "Resend verification email"}
+        </button>
+        {msg && <AuthNotice tone="info">{msg}</AuthNotice>}
+        <Link
+          href="/login"
+          className="block text-center text-sm text-ink font-medium hover:text-accent transition-colors mt-6"
+        >
+          Back to sign in
+        </Link>
+      </AuthShell>
+    );
+  }
+
+  return (
+    <AuthShell
+      title="Sign in"
+      subtitle="Welcome back to PawVoice."
+      footer={
+        <>
+          No account?{" "}
+          <Link
+            href="/register"
+            className="text-ink font-medium hover:text-accent transition-colors"
+          >
+            Sign up
+          </Link>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="you@example.com"
+          className="w-full px-3 py-2 border border-rule rounded-lg text-sm bg-paper text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-focus"
+          required
+        />
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="password (min 8)"
+          className="w-full px-3 py-2 border border-rule rounded-lg text-sm bg-paper text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-focus"
+          required
+        />
+        <button
+          type="submit"
+          className="w-full px-4 py-2.5 mt-2 bg-accent text-paper rounded-lg font-medium hover:bg-ink transition-colors"
+        >
+          Sign in
+        </button>
       </form>
-    </div>
+
+      {msg && <AuthNotice tone="error">{msg}</AuthNotice>}
+
+      <div className="flex justify-between items-center mt-4 text-sm">
+        <Link
+          href="/forgot-password"
+          className="text-ink font-medium hover:text-accent transition-colors"
+        >
+          Forgot password?
+        </Link>
+      </div>
+    </AuthShell>
   );
 }
