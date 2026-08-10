@@ -11,8 +11,10 @@
 import type * as auth from "../auth.js";
 import type * as billing from "../billing.js";
 import type * as callSessions from "../callSessions.js";
+import type * as checkout from "../checkout.js";
+import type * as creem from "../creem.js";
+import type * as creemWebhook from "../creemWebhook.js";
 import type * as dodo from "../dodo.js";
-import type * as dodoWebhook from "../dodoWebhook.js";
 import type * as http from "../http.js";
 import type * as inviteInserts from "../inviteInserts.js";
 import type * as invites from "../invites.js";
@@ -39,8 +41,10 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   billing: typeof billing;
   callSessions: typeof callSessions;
+  checkout: typeof checkout;
+  creem: typeof creem;
+  creemWebhook: typeof creemWebhook;
   dodo: typeof dodo;
-  dodoWebhook: typeof dodoWebhook;
   http: typeof http;
   inviteInserts: typeof inviteInserts;
   invites: typeof invites;

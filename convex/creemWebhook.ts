@@ -12,6 +12,9 @@ import { creemVerifyWebhook } from "./creem";
 interface CreemCheckoutCompleted {
   eventType?: string;
   object?: {
+    // In a checkout.completed payload, `order` and `customer` are siblings
+    // under `object` (per Creem docs). `order.customer` is only the customer
+    // ID string; the customer's email lives on `object.customer`.
     order?: { id?: string; amount?: number; currency?: string; status?: string };
     customer?: { id?: string; email?: string };
     metadata?: Record<string, string>;
@@ -41,12 +44,28 @@ export const creemWebhook = httpAction(async (ctx, req) => {
     object.customer &&
     object.customer.email
   ) {
-    void ctx.runMutation(internal.payments.addCreditsFromPayment, {
-      email: object.customer.email,
+    const res = await ctx.runMutation(internal.payments.addCreditsFromPayment, {
+      email: object.customer.email.toLowerCase(),
       amount: Number(object.order.amount ?? 0),
       currency: object.order.currency ?? "USD",
       dodoPaymentId: String(object.order.id),
       dodoCustomerId: object.customer.id,
+    });
+    if (!res.ok) {
+      // Surface dedup / "user not found" outcomes instead of swallowing them.
+      console.error("Creem credit not applied:", {
+        reason: res.reason,
+        email: object.customer.email,
+        orderId: object.order.id,
+      });
+    }
+  } else {
+    console.error("Creem webhook: unhandled payload shape", {
+      eventType,
+      hasOrder: !!object?.order,
+      orderId: object?.order?.id,
+      hasCustomer: !!object?.customer,
+      customerEmail: object?.customer?.email,
     });
   }
 
