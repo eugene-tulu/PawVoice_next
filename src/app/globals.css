@@ -33,6 +33,7 @@
   --color-accent-2: oklch(64% 0.18 36);
   --color-focus:    oklch(50% 0.22 32);
   --color-accent-soft: oklch(93% 0.07 42);
+  --color-accent-soft-hover: oklch(89% 0.07 42);
 
   /* Typography tokens (next/font sets the variable values) */
   --font-display: var(--font-display);
@@ -51,24 +52,26 @@
   --text-4xl:   clamp(2.75rem, 5vw + 1rem, 5.25rem);
 }
 
-/* Dark mode — deep warm ink, lifted surfaces, glowing accent */
+/* Dark mode — deep warm ink, lifted surfaces, glowing accent.
+   Unified warm-neutral hue (~55) for paper/surfaces + terracotta accent (~35). */
 .dark {
-  --color-paper:    oklch(15% 0.010 60);
-  --color-paper-2:  oklch(18% 0.012 60);
-  --color-paper-3:  oklch(22% 0.012 60);
-  --color-surface:    oklch(21% 0.012 60);
-  --color-surface-2:  oklch(24% 0.012 60);
-  --color-raise:      oklch(26% 0.014 60);
-  --color-rule:     oklch(32% 0.008 60);
-  --color-rule-2:   oklch(28% 0.008 60);
-  --color-neutral:  oklch(60% 0.008 60);
-  --color-muted:    oklch(70% 0.006 80);
-  --color-ink:      oklch(96% 0.006 80);
-  --color-ink-2:    oklch(78% 0.008 80);
-  --color-accent:   oklch(70% 0.15 35);
-  --color-accent-2: oklch(76% 0.14 40);
-  --color-focus:    oklch(72% 0.18 35);
-  --color-accent-soft: oklch(30% 0.06 35);
+  --color-paper:    oklch(16% 0.010 55);
+  --color-paper-2:  oklch(19% 0.011 55);
+  --color-paper-3:  oklch(23% 0.012 55);
+  --color-surface:    oklch(20% 0.011 55);
+  --color-surface-2:  oklch(24% 0.012 55);
+  --color-raise:      oklch(27% 0.013 55);
+  --color-rule:     oklch(36% 0.010 55);
+  --color-rule-2:   oklch(31% 0.010 55);
+  --color-neutral:  oklch(60% 0.010 60);
+  --color-muted:    oklch(68% 0.010 65);
+  --color-ink:      oklch(95% 0.007 80);
+  --color-ink-2:    oklch(80% 0.010 75);
+  --color-accent:   oklch(74% 0.15 38);
+  --color-accent-2: oklch(80% 0.14 42);
+  --color-focus:    oklch(76% 0.17 38);
+  --color-accent-soft: oklch(33% 0.08 40);
+  --color-accent-soft-hover: oklch(39% 0.09 40);
 }
 
 :root {
@@ -212,7 +215,7 @@ a:hover {
   color: var(--color-accent);
 }
 .btn-soft:hover {
-  background: oklch(90% 0.06 40);
+  background: var(--color-accent-soft-hover);
   color: var(--color-ink);
 }
 .btn:active { transform: translateY(1px); }

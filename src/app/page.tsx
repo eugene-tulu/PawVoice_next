@@ -251,7 +251,7 @@ export default function Home() {
 
       {/* FINAL CTA */}
       <Section>
-        <div className="card-raise relative overflow-hidden bg-ink text-paper px-8 py-14 text-center">
+        <div className="relative overflow-hidden rounded-[2rem] bg-ink text-paper px-8 py-14 text-center">
           <div
             className="pointer-events-none absolute inset-0 opacity-40"
             style={{

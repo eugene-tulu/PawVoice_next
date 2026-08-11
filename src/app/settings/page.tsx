@@ -183,6 +183,11 @@ export default function Settings() {
             >
               {portalLoading ? "Opening…" : "Billing portal"}
             </button>
+            {!me?.dodoCustomerId && (
+              <p className="text-xs text-muted mt-2">
+                Buy credits first to open your billing portal.
+              </p>
+            )}
           </div>
         </section>
 
