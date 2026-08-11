@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Navigation from "@/components/navigation";
 import BuyCredits from "@/components/buy-minutes";
+import { authClient } from "@/lib/auth-client";
 
 export default function Settings() {
   const authStatus = useQuery(api.auth.getAuthStatus);
@@ -12,11 +13,16 @@ export default function Settings() {
   const usage = useQuery(api.usageEvents.listUsage, {});
   const registerPhone = useMutation(api.users.registerPhone);
   const openBillingPortal = useAction(api.payments.billingPortal);
+  const deleteAccountData = useMutation(api.account.deleteAccount);
   const router = useRouter();
   const [phoneInput, setPhoneInput] = useState("");
   const [phoneLoading, setPhoneLoading] = useState(false);
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     if (authStatus?.status === "unauthenticated") {
@@ -73,6 +79,24 @@ export default function Settings() {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    if (confirmText !== "DELETE") return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      // 1) Wipe all app data while still authenticated.
+      await deleteAccountData({});
+      // 2) Remove the Better Auth identity (session still valid here).
+      await authClient.deleteUser();
+      router.push("/");
+    } catch (err) {
+      setDeleteError(
+        err instanceof Error ? err.message : "Failed to delete account"
+      );
+      setDeleting(false);
+    }
+  };
+
   const formatCost = (cents: number) => `$${(cents / 100).toFixed(2)}`;
   const formatDate = (ts: number) =>
     new Date(ts).toLocaleDateString("en-US", {
@@ -120,7 +144,7 @@ export default function Settings() {
                 <button
                   type="submit"
                   disabled={phoneLoading}
-                  className="px-4 py-2 bg-accent text-paper rounded text-sm font-medium hover:bg-ink transition-colors disabled:opacity-60"
+                  className="btn btn-primary !rounded-lg"
                 >
                   {phoneLoading ? "Saving…" : "Register"}
                 </button>
@@ -149,7 +173,7 @@ export default function Settings() {
             <button
               onClick={handlePortal}
               disabled={portalLoading || !me?.dodoCustomerId}
-              className="mt-3 px-4 py-2 border border-rule rounded text-sm font-medium text-ink hover:bg-paper-2 disabled:opacity-50 transition-colors"
+              className="btn btn-ghost !rounded-lg"
             >
               {portalLoading ? "Opening…" : "Billing portal"}
             </button>
@@ -197,7 +221,71 @@ export default function Settings() {
             </table>
           )}
         </section>
+
+        <section className="mb-4">
+          <h2 className="font-display text-xl font-semibold text-ink mb-4">
+            Delete account
+          </h2>
+          <div className="border border-rule rounded-lg p-5">
+            <p className="text-sm text-ink-2">
+              Permanently delete your account and all associated data — your
+              profile, pets you own, activity logs, call history, and payment
+              records. This cannot be undone.
+            </p>
+            <button
+              onClick={() => {
+                setConfirmText("");
+                setDeleteError(null);
+                setShowDeleteModal(true);
+              }}
+              className="mt-3 px-4 py-2 border border-red-500 text-red-600 rounded text-sm font-medium hover:bg-red-50 transition-colors"
+            >
+              Delete my account
+            </button>
+          </div>
+        </section>
       </main>
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="bg-paper border border-rule rounded-lg p-6 max-w-md w-full">
+            <h3 className="font-display text-lg font-semibold text-ink mb-2">
+              Delete your account?
+            </h3>
+            <p className="text-sm text-ink-2 mb-4">
+              This permanently erases your account, pets you own, activity logs,
+              call history, and payment records. It cannot be undone. Type{" "}
+              <strong className="text-ink">DELETE</strong> to confirm.
+            </p>
+            <input
+              type="text"
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              placeholder="DELETE"
+              className="field mb-3"
+            />
+            {deleteError && (
+              <p className="text-xs text-red-600 mb-3">{deleteError}</p>
+            )}
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleting}
+                className="px-4 py-2 border border-rule rounded text-sm font-medium text-ink hover:bg-paper-2 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleting || confirmText !== "DELETE"}
+                className="px-4 py-2 bg-red-600 text-paper rounded text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
+              >
+                {deleting ? "Deleting…" : "Delete everything"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

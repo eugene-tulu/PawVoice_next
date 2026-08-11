@@ -3,6 +3,7 @@ import { ConvexClientProvider } from "./ConvexClientProvider";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
 import { Fraunces, Geist, Geist_Mono } from "next/font/google";
+import Footer from "@/components/footer";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <ConvexClientProvider>
             {children}
+            <Footer />
           </ConvexClientProvider>
         </ThemeProvider>
       </body>

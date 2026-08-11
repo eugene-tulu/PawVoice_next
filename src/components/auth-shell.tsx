@@ -1,9 +1,9 @@
 "use client";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { Button } from "./ui";
 
-// Shared shell for the auth flow — editorial wordmark + refined card,
-// consistent with the Hallmark-inspired tokens in globals.css.
+// Shared shell for the auth flow — editorial wordmark + refined card.
 export function AuthShell({
   title,
   subtitle,
@@ -26,7 +26,7 @@ export function AuthShell({
             Paw<span className="text-accent">Voice</span>
           </Link>
         </div>
-        <div className="bg-paper-2 border border-rule rounded-2xl p-8 shadow-sm">
+        <div className="card p-8">
           <h1 className="font-display text-2xl font-semibold text-ink text-center mb-1">
             {title}
           </h1>
@@ -45,8 +45,7 @@ export function AuthShell({
   );
 }
 
-// Clearly-visible status/error note. `error` = terracotta (brand accent),
-// `info`/`success` = quiet neutral. Never invisible.
+// Clearly-visible status/error note.
 export function AuthNotice({
   tone = "error",
   children,
@@ -61,10 +60,10 @@ export function AuthNotice({
         ? "bg-ink/5 text-ink-2 border-rule"
         : "bg-ink/5 text-muted border-rule";
   return (
-    <p
-      className={`text-center text-sm mt-4 rounded-lg border px-3 py-2 ${cls}`}
-    >
+    <p className={`text-center text-sm mt-4 rounded-lg border px-3 py-2 ${cls}`}>
       {children}
     </p>
   );
 }
+
+export { Button };

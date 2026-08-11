@@ -43,10 +43,7 @@ export default function BuyCredits() {
             key={pack.cents}
             onClick={() => handlePurchase(pack.cents)}
             disabled={loading !== null}
-            className="w-full py-2.5 px-4 rounded text-left font-medium transition
-              bg-paper hover:bg-rule
-              border border-rule
-              text-ink disabled:opacity-60"
+            className="btn btn-ghost w-full justify-between !rounded-xl !py-3 !px-4"
           >
             {loading === pack.cents ? (
               <span className="flex items-center gap-2">

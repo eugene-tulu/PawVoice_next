@@ -45,7 +45,7 @@ export default function CreatePet({ onSuccess }: { onSuccess?: (id: string) => v
         placeholder="Name *"
         required
         disabled={loading}
-        className="w-full px-3 py-2 border border-rule rounded text-sm bg-paper text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-focus disabled:opacity-60"
+        className="w-full field disabled:opacity-60"
       />
 
       <select
@@ -64,7 +64,7 @@ export default function CreatePet({ onSuccess }: { onSuccess?: (id: string) => v
         name="breed"
         placeholder="Breed (optional)"
         disabled={loading}
-        className="mt-3 w-full px-3 py-2 border border-rule rounded text-sm bg-paper text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-focus disabled:opacity-60"
+        className="mt-3 w-full field disabled:opacity-60"
       />
 
       <input
@@ -73,7 +73,7 @@ export default function CreatePet({ onSuccess }: { onSuccess?: (id: string) => v
         min="0"
         placeholder="Age in years (optional)"
         disabled={loading}
-        className="mt-3 w-full px-3 py-2 border border-rule rounded text-sm bg-paper text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-focus disabled:opacity-60"
+        className="mt-3 w-full field disabled:opacity-60"
       />
 
       <textarea
@@ -81,13 +81,13 @@ export default function CreatePet({ onSuccess }: { onSuccess?: (id: string) => v
         placeholder="Notes (optional)"
         rows={2}
         disabled={loading}
-        className="mt-3 w-full px-3 py-2 border border-rule rounded text-sm bg-paper text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-focus disabled:opacity-60"
+        className="mt-3 w-full field disabled:opacity-60"
       />
 
       <button
         type="submit"
         disabled={loading}
-        className="mt-4 w-full px-4 py-2 bg-accent text-paper rounded font-medium hover:bg-ink transition-colors disabled:opacity-60"
+        className="btn btn-primary mt-4 w-full"
       >
         {loading ? "Saving…" : "Save pet"}
       </button>

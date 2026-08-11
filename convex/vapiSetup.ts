@@ -27,7 +27,7 @@ interface VapiListResponse {
 }
 
 export const ASSISTANT_FIRST_MESSAGE =
-  "Hi, this is PawVoice. Tell me which pet you're logging for and what they did — for example, 'Buster had a 30 minute walk and seemed energetic.'";
+  "Hi, this is PawVoice. Heads up — this call is recorded and processed by AI to log your pet's activities. Tell me which pet you're logging for and what they did — for example, 'Buster had a 30 minute walk and seemed energetic.'";
 
 export const ASSISTANT_SYSTEM_PROMPT = `You are PawVoice, a friendly voice assistant that turns spoken pet-sitting visits into structured activity logs. You only log activities — you do not schedule, bill, or give medical advice.
 
@@ -92,6 +92,12 @@ const UNDO_LAST_TOOL = {
   },
 };
 
+// NOTE: Data retention for call audio/transcripts is controlled by Vapi's
+// organization-level Zero Data Retention (ZDR) add-on, enabled in the Vapi
+// Dashboard (Settings > Add-ons), NOT via this API. For the privacy promise
+// "we do not retain call recordings/transcripts" to hold, enable ZDR in the
+// dashboard. ZDR is mutually exclusive with HIPAA mode. See:
+// https://docs.vapi.ai/security-and-privacy/zero-data-retention
 const ASSISTANT_PAYLOAD = {
   name: "PawVoice Activity Logger",
   firstMessage: ASSISTANT_FIRST_MESSAGE,

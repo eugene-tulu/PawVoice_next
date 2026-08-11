@@ -117,7 +117,7 @@ export default function LoginPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
-          className="w-full px-3 py-2 border border-rule rounded-lg text-sm bg-paper text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-focus"
+          className="field"
           required
         />
         <input
@@ -125,7 +125,7 @@ export default function LoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="password (min 8)"
-          className="w-full px-3 py-2 border border-rule rounded-lg text-sm bg-paper text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-focus"
+          className="field"
           required
         />
         <button

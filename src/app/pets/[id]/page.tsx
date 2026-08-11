@@ -221,7 +221,7 @@ export default function PetDetail() {
                 value={editNotes}
                 onChange={(e) => setEditNotes(e.target.value)}
                 rows={3}
-                className="w-full px-3 py-2 border border-rule rounded text-sm bg-paper text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-focus"
+                className="field"
               />
               <div className="mt-4 flex gap-2 justify-end">
                 <button
@@ -249,14 +249,14 @@ export default function PetDetail() {
             <button
               onClick={handleExportCsv}
               disabled={!csvData}
-              className="px-4 py-2 border border-rule rounded text-sm font-medium text-ink hover:bg-paper-2 disabled:opacity-50 transition-colors"
+              className="btn btn-ghost !rounded-lg"
             >
               Download CSV
             </button>
             <button
               onClick={handleExportJson}
               disabled={!jsonData}
-              className="px-4 py-2 border border-rule rounded text-sm font-medium text-ink hover:bg-paper-2 disabled:opacity-50 transition-colors"
+              className="btn btn-ghost !rounded-lg"
             >
               Download JSON
             </button>
@@ -286,7 +286,7 @@ export default function PetDetail() {
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
                 placeholder="friend@example.com"
-                className="w-full px-3 py-2 border border-rule rounded text-sm bg-paper text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-focus"
+                className="field"
                 required
                 disabled={inviteLoading}
               />
@@ -298,7 +298,7 @@ export default function PetDetail() {
               <select
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value as "owner" | "member")}
-                className="px-3 py-2 border border-rule rounded text-sm bg-paper text-ink focus:outline-none focus:ring-2 focus:ring-focus cursor-pointer"
+                className="field cursor-pointer"
               >
                 <option value="member">Member (view logs)</option>
                 <option value="owner">Owner (full access)</option>

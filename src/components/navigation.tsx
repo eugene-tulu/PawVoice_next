@@ -2,9 +2,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 
 export default function Navigation() {
   const router = useRouter();
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const handleSignOut = async () => {
     await authClient.signOut();
@@ -18,9 +23,7 @@ export default function Navigation() {
 
   return (
     <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-50">
-      <div
-        className="inline-flex items-center gap-1 px-2 py-1.5 bg-paper/80 dark:bg-paper/10 backdrop-blur-sm border border-rule rounded-full shadow-md"
-      >
+      <div className="inline-flex items-center gap-1 px-2 py-1.5 bg-paper/80 dark:bg-paper/15 backdrop-blur-md border border-rule rounded-full shadow-md">
         <Link
           href="/dashboard"
           className="font-display text-lg font-semibold text-ink px-2 py-1"
@@ -38,6 +41,13 @@ export default function Navigation() {
           </Link>
         ))}
         <div className="h-4 w-px bg-rule mx-1" />
+        <button
+          aria-label="Toggle theme"
+          onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+          className="grid h-7 w-7 place-items-center rounded-full text-ink-2 hover:text-ink hover:bg-paper-2 transition-colors"
+        >
+          {mounted && resolvedTheme === "dark" ? "☀" : "☾"}
+        </button>
         <button
           onClick={handleSignOut}
           className="text-xs font-medium text-muted hover:text-ink px-3 py-1 rounded-full transition-colors duration-150"

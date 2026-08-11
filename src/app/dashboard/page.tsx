@@ -129,7 +129,7 @@ export default function Dashboard() {
               <button
                 type="submit"
                 disabled={phoneLoading}
-                className="px-4 py-2 bg-accent text-paper rounded text-sm font-medium hover:bg-ink transition-colors disabled:opacity-60"
+                className="btn btn-primary !rounded-lg"
               >
                 {phoneLoading ? "Saving…" : "Register"}
               </button>
