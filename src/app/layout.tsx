@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "next-themes";
 import { Fraunces, Geist, Geist_Mono } from "next/font/google";
 import Footer from "@/components/footer";
+import { ToastProvider } from "@/components/toast";
 import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
 import { SITE_NAME, TAGLINE, DESCRIPTION, SITE_URL } from "@/lib/site";
@@ -75,10 +76,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning className={`${fraunces.variable} ${geist.variable} ${geistMono.variable}`}>
       <body>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <ConvexClientProvider>
-            {children}
-            <Footer />
-          </ConvexClientProvider>
+          <ToastProvider>
+            <ConvexClientProvider>
+              {children}
+              <Footer />
+            </ConvexClientProvider>
+          </ToastProvider>
           <Analytics />
         </ThemeProvider>
       </body>

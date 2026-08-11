@@ -5,8 +5,10 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
 import { GenericId } from "convex/values";
-import Navigation from "@/components/navigation";
+import { SiteNav } from "@/components/site-nav";
 import MedicalDisclaimer from "@/components/medical-disclaimer";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { useToast } from "@/components/toast";
 
 const ACTIVITY_LABELS: Record<string, string> = {
   walk: "Walk", run: "Run", play: "Play", feeding: "Feeding",
@@ -32,6 +34,14 @@ export default function PetDetail() {
   const [inviteLoading, setInviteLoading] = useState(false);
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<GenericId<"logs"> | null>(
+    null
+  );
+  const [deleting, setDeleting] = useState(false);
+  const toast = useToast();
+
+  const EDIT_WINDOW_MS = 24 * 60 * 60 * 1000;
+  const canEdit = (ts: number) => Date.now() - ts <= EDIT_WINDOW_MS;
 
   if (pet === undefined || logs === undefined) {
     return (
@@ -47,7 +57,7 @@ export default function PetDetail() {
   if (pet === null || logs === null) {
     return (
       <div className="min-h-screen bg-paper">
-        <Navigation />
+        <SiteNav />
         <main className="max-w-3xl mx-auto px-6 py-16">
           <h1 className="font-display text-2xl font-black text-ink mb-4">Pet not found</h1>
           <p className="text-ink-2">This pet &apos;t exist or you don&apos;t have access.</p>
@@ -67,17 +77,33 @@ export default function PetDetail() {
       await editLog({ logId: editingLog, notes: editNotes || undefined });
       setEditingLog(null);
       setEditNotes("");
+      toast("Log updated", "success");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to edit log");
+      toast(
+        err instanceof Error ? err.message : "Failed to edit log",
+        "error"
+      );
     }
   };
 
   const handleDelete = async (logId: GenericId<"logs">) => {
-    if (!confirm("Delete this log entry?")) return;
+    setDeleteTarget(logId);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      await deleteLog({ logId });
+      await deleteLog({ logId: deleteTarget });
+      toast("Log deleted", "success");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to delete log");
+      toast(
+        err instanceof Error ? err.message : "Failed to delete log",
+        "error"
+      );
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
     }
   };
 
@@ -133,7 +159,7 @@ export default function PetDetail() {
 
   return (
     <div className="min-h-screen bg-paper text-ink font-body">
-      <Navigation />
+      <SiteNav />
       <main className="max-w-3xl mx-auto px-6 py-16">
         <Link
           href="/dashboard"
@@ -191,19 +217,27 @@ export default function PetDetail() {
                       By: {log.callerName}
                     </p>
                   )}
-                  <div className="mt-3 flex gap-3 text-xs">
-                    <button
-                      onClick={() => handleEdit(log._id, log.notes ?? "")}
-                      className="text-muted hover:text-ink transition-colors"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(log._id)}
-                      className="text-muted hover:text-ink transition-colors"
-                    >
-                      Delete
-                    </button>
+                  <div className="mt-3 flex items-center gap-3 text-xs">
+                    {canEdit(log.timestamp) ? (
+                      <>
+                        <button
+                          onClick={() => handleEdit(log._id, log.notes ?? "")}
+                          className="text-muted transition-colors hover:text-ink"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(log._id)}
+                          className="text-muted transition-colors hover:text-ink"
+                        >
+                          Delete
+                        </button>
+                      </>
+                    ) : (
+                      <span className="text-muted">
+                        Locked after 24 hours
+                      </span>
+                    )}
                   </div>
                 </div>
               ))}
@@ -240,6 +274,16 @@ export default function PetDetail() {
             </div>
           </div>
         )}
+
+        <ConfirmDialog
+          open={deleteTarget !== null}
+          title="Delete this log entry?"
+          description="This permanently removes the activity from the pet's timeline. It cannot be undone."
+          confirmLabel="Delete"
+          busy={deleting}
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleteTarget(null)}
+        />
 
         <section className="mb-12">
           <h2 className="font-display text-xl font-semibold text-ink mb-4">

@@ -1,6 +1,5 @@
 import { Button, Section, Eyebrow, Badge } from "@/components/ui";
 import { ProductPreview } from "@/components/product-preview";
-import Footer from "@/components/footer";
 import { SiteNav } from "@/components/site-nav";
 
 const STEPS = [
@@ -280,7 +279,6 @@ export default function Home() {
         </div>
       </Section>
 
-      <Footer />
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import Navigation from "@/components/navigation";
+import { SiteNav } from "@/components/site-nav";
 
 export default function InvitePage() {
   const params = useParams<{ token: string }>();
@@ -44,7 +44,7 @@ export default function InvitePage() {
 
   return (
     <div className="min-h-screen bg-paper text-ink font-body">
-      <Navigation />
+      <SiteNav />
       <main className="max-w-md mx-auto px-6 py-16 text-center">
         <div className="w-16 h-16 bg-ink/5 rounded-full flex items-center justify-center mx-auto mb-6">
           <span className="text-2xl">✉️</span>

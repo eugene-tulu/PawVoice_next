@@ -3,7 +3,8 @@ import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import Navigation from "@/components/navigation";
+import { SiteNav } from "@/components/site-nav";
+import { useToast } from "@/components/toast";
 import BuyCredits from "@/components/buy-minutes";
 import { authClient } from "@/lib/auth-client";
 
@@ -15,6 +16,7 @@ export default function Settings() {
   const openBillingPortal = useAction(api.payments.billingPortal);
   const deleteAccountData = useMutation(api.account.deleteAccount);
   const router = useRouter();
+  const toast = useToast();
   const [phoneInput, setPhoneInput] = useState("");
   const [phoneLoading, setPhoneLoading] = useState(false);
   const [phoneError, setPhoneError] = useState<string | null>(null);
@@ -57,7 +59,8 @@ export default function Settings() {
     setPhoneError(null);
     try {
       await registerPhone({ phone: phoneInput });
-      window.location.reload();
+      setPhoneInput("");
+      toast("Phone number registered", "success");
     } catch (err) {
       setPhoneError(err instanceof Error ? err.message : "Failed to register phone");
     } finally {
@@ -73,7 +76,10 @@ export default function Settings() {
         window.location.href = result.portal_url;
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Could not open billing portal");
+      toast(
+        err instanceof Error ? err.message : "Could not open billing portal",
+        "error"
+      );
     } finally {
       setPortalLoading(false);
     }
@@ -107,7 +113,7 @@ export default function Settings() {
 
   return (
     <div className="min-h-screen bg-paper text-ink font-body">
-      <Navigation />
+      <SiteNav />
       <main className="max-w-3xl mx-auto px-6 py-16">
         <h1 className="font-display text-3xl font-black tracking-tight text-ink mb-10">
           Settings

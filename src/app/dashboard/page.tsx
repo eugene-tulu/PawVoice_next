@@ -4,7 +4,8 @@ import { api } from "../../../convex/_generated/api";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Navigation from "@/components/navigation";
+import { SiteNav } from "@/components/site-nav";
+import { useToast } from "@/components/toast";
 import CreatePet from "@/components/create-pet";
 import BuyCredits from "@/components/buy-minutes";
 import MedicalDisclaimer from "@/components/medical-disclaimer";
@@ -16,6 +17,7 @@ export default function Dashboard() {
   const ensureRow = useMutation(api.users.ensureRow);
   const registerPhone = useMutation(api.users.registerPhone);
   const router = useRouter();
+  const toast = useToast();
 
   const [phoneInput, setPhoneInput] = useState("");
   const [phoneLoading, setPhoneLoading] = useState(false);
@@ -48,7 +50,8 @@ export default function Dashboard() {
     setPhoneError(null);
     try {
       await registerPhone({ phone: phoneInput });
-      window.location.reload();
+      setPhoneInput("");
+      toast("Phone number registered", "success");
     } catch (err) {
       setPhoneError(err instanceof Error ? err.message : "Failed to register phone");
     } finally {
@@ -75,18 +78,12 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-paper text-ink font-body">
-      <Navigation />
+      <SiteNav />
       <main className="max-w-4xl mx-auto px-6 py-16">
         <div className="flex justify-between items-baseline mb-12">
           <h1 className="font-display text-3xl font-black tracking-tight">
             Dashboard
           </h1>
-          <button
-            onClick={() => window.location.reload()}
-            className="text-xs text-muted hover:text-ink transition-colors"
-          >
-            Refresh
-          </button>
         </div>
 
         <section className="mb-12">

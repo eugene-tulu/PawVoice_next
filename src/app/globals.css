@@ -39,11 +39,11 @@
   --font-body:    var(--font-body);
   --font-mono:    var(--font-mono);
 
-  /* Type scale (major third 1.25, body = 1rem) */
-  --text-xs:    0.64rem;
-  --text-sm:    0.8rem;
+  /* Type scale (major third 1.25, body = 1rem; smoothed ramp for small/body sizes) */
+  --text-xs:    0.72rem;
+  --text-sm:    0.875rem;
   --text-base:  1rem;
-  --text-md:    1.25rem;
+  --text-md:    1.125rem;
   --text-lg:    1.5625rem;
   --text-xl:    1.953rem;
   --text-2xl:   2.441rem;

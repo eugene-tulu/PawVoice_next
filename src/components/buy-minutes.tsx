@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import { useToast } from "./toast";
 
 const CREDIT_PACKS = [
   { cents: 1000, label: "$10", minutes: 55 },
@@ -12,6 +13,7 @@ const CREDIT_PACKS = [
 export default function BuyCredits() {
   const createCreditPack = useAction(api.payments.createCreditPack);
   const [loading, setLoading] = useState<number | null>(null);
+  const toast = useToast();
 
   const handlePurchase = async (cents: number) => {
     setLoading(cents);
@@ -20,10 +22,13 @@ export default function BuyCredits() {
       if (result?.checkout_url) {
         window.location.href = result.checkout_url;
       } else {
-        alert("Could not start checkout. Please try again.");
+        toast("Could not start checkout. Please try again.", "error");
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Checkout failed. Please try again.");
+      toast(
+        err instanceof Error ? err.message : "Checkout failed. Please try again.",
+        "error"
+      );
     } finally {
       setLoading(null);
     }

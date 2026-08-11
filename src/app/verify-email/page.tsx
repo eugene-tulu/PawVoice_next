@@ -6,10 +6,12 @@ import { api } from "../../../convex/_generated/api";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { authClient } from "@/lib/auth-client";
+import { useToast } from "@/components/toast";
 
 export default function VerifyEmailPage() {
   const authStatus = useQuery(api.auth.getAuthStatus);
   const router = useRouter();
+  const toast = useToast();
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
 
@@ -32,10 +34,13 @@ export default function VerifyEmailPage() {
         setSent(true);
         setTimeout(() => setSent(false), 5000);
       } else {
-        alert(error.message ?? "Failed to resend email. Please try again.");
+        toast(
+          error.message ?? "Failed to resend email. Please try again.",
+          "error"
+        );
       }
     } catch {
-      alert("Network error. Please check your connection.");
+      toast("Network error. Please check your connection.", "error");
     } finally {
       setSending(false);
     }
