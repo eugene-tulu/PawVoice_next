@@ -1,6 +1,6 @@
 # Terms of Use
 
-**Last updated: [DATE]**
+**Last updated: August 11, 2026**
 
 ## Before you read this
 These Terms match the Service's actual data flows and billing logic. They are **not legal advice**; have them reviewed by a lawyer before launch — especially the recording-consent section and the choice of governing law for cross-border users. Every bracketed `[ ]` item is a fact or decision you must fill in.

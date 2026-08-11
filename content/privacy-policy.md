@@ -1,6 +1,6 @@
 # Privacy Policy
 
-**Last updated: [DATE]**
+**Last updated: August 11, 2026**
 
 ## Before you read this
 This policy describes how **Eugene Odhiambo** ("we," "us," "our") operating **PawVoice** ("the Service") collects, uses, and shares information. It is written to match what the Service actually does. It is **not legal advice**; have it reviewed by a lawyer before launch, especially the recording-consent and international-transfer sections.

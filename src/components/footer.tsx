@@ -32,10 +32,10 @@ export default function Footer() {
           </div>
           <div className="flex flex-col gap-2">
             <span className="font-medium text-ink">Legal</span>
-            <Link href="/privacy-policy.md" className="text-muted hover:text-ink transition-colors">
+            <Link href="/privacy-policy" className="text-muted hover:text-ink transition-colors">
               Privacy Policy
             </Link>
-            <Link href="/terms-of-use.md" className="text-muted hover:text-ink transition-colors">
+            <Link href="/terms-of-use" className="text-muted hover:text-ink transition-colors">
               Terms of Use
             </Link>
           </div>
