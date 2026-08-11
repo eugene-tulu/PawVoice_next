@@ -102,10 +102,6 @@ const ASSISTANT_PAYLOAD = {
     tools: [LOG_ACTIVITY_TOOL, UNDO_LAST_TOOL],
   },
   transcriber: { provider: "deepgram", model: "nova-2", language: "en" },
-  voice: {
-    provider: "11labs",
-    voiceId: process.env.VAPI_VOICE_ID ?? "21m00Tcsa6VES8Plo5x8",
-  },
   server: {
     url: WEBHOOK_URL,
     headers: { Authorization: `Bearer ${WEBHOOK_SECRET}` },
