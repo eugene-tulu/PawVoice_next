@@ -2,106 +2,108 @@
 
 **Last updated: August 11, 2026**
 
-## Before you read this
-This policy describes how **Eugene Odhiambo** ("we," "us," "our") operating **PawVoice** ("the Service") collects, uses, and shares information. It is written to match what the Service actually does. It is **not legal advice**; have it reviewed by a lawyer before launch, especially the recording-consent and international-transfer sections.
+This Privacy Policy explains how **Eugene Odhiambo** ("we," "us," or "our") operating **PawVoice** ("the Service") collects, uses, and shares information about you. It describes what actually happens when you use the Service — please read it before you start.
 
 ---
 
-## 1. Who this policy covers
+## 1. Who this applies to
 
-This Privacy Policy applies to anyone who creates a PawVoice account, links a pet, or calls our phone number.
+This Privacy Policy covers anyone who creates a PawVoice account, adds a pet, or calls our phone number.
 
 ## 2. Information we collect
 
-**Identity & account information**
+**Account information**
 - Email address, name, and account role (owner or sitter).
-- Phone number, in international (E.164) format.
-  - *Known limitation:* as of this build, phone numbers are trusted at registration and are **not verified with a one-time code (OTP)**. Someone could register a number they don't control. We disclose this so you understand the current identity-assurance level. We plan to add OTP verification.
+- Phone number, stored in international (E.164) format. This number is how we identify you when you call.
 
 **Pet information**
-- Pet name, species, breed, age, and any notes you or a linked user add.
+- Your pet's name, species, breed, age, and any notes you or a linked user add.
 
-**Voice call & activity log data**
-- When you call our number: your caller phone number, call duration, and the call recording/transcript.
-- The structured activity log extracted from your call: which pet, activity type, duration, and your notes as spoken (captured as close to verbatim as reasonably possible).
-- Records of each call session and usage (for billing and service-quality purposes).
-- If other people speak during your call, their voices may be captured in the recording/transcript.
+**Voice call and activity log data**
+- When you call our number: your caller phone number, the call duration, and the call recording and transcript.
+- The structured log we extract from your call: which pet, the activity type, the duration, and your notes spoken as close to verbatim as reasonably possible.
+- Session and usage records, used for billing and to keep the Service reliable.
+- If other people speak during your call, their voices may be captured in the recording and transcript.
 
 **Payment information**
-- Your email address, payment amount, currency, and payment status.
-- We do **not** store your full card number or banking credentials — those are handled directly by our payment processor.
+- Your email, the payment amount, currency, and payment status.
+- We do **not** store your full card number or banking details. Those are handled entirely by our payment processor.
 
-**Sharing & invitations**
+**Invitations and sharing**
 - Email addresses of people you invite to a pet record.
-- Access tokens/links used for view-only sharing.
+- Tokens and links used to grant view-only access.
 
-## 3. How we use this information
+## 3. How we use your information
 
-- To operate the core Service: answering your calls, converting speech to structured logs, and displaying them to you and people you've linked to a pet.
-- To identify you when you call, based on your registered phone number.
-- To bill pay-as-you-go usage, process auto-refills, and manage your credit balance.
-- To let you invite, and be invited by, other users to share a pet's records.
-- To monitor and improve service quality and reliability (aggregate usage patterns, error rates).
-- To communicate with you about your account, billing, or changes to this policy.
+- To run the Service: answering your calls, turning your speech into structured logs, and showing them to you and to people you've linked to a pet.
+- To recognize you by your registered phone number when you call.
+- To bill pay-as-you-go usage, top up credits, and manage your balance.
+- To let you invite others — and be invited — to share a pet's records.
+- To monitor service quality and fix problems (aggregating usage and error rates).
+- To contact you about your account, billing, or changes to this policy.
 
 **We do not use your data to train our own AI models. We do not sell your personal information.**
 
-## 4. AI processing and call recording
+## 4. Call recording and AI processing
 
-Calls to PawVoice are recorded and processed by AI voice and language models to extract structured log entries from what you say. **This is disclosed verbally at the start of every call** (the assistant states the call is recorded and processed by AI before you speak). By continuing the call after that disclosure, you consent to this recording and processing. If you do not consent, end the call.
+Calls to PawVoice are processed by AI voice and language models to turn what you say into structured log entries. **The assistant tells you the call is recorded and processed by AI at the start of every call, before you speak.** Continuing the call after that announcement means you consent to this recording and processing. If you do not consent, please end the call.
 
-Your call audio and transcripts are processed by our voice AI infrastructure provider, **Vapi**, and its underlying model and speech-transcription sub-providers (OpenAI for extraction, Deepgram for transcription). See Section 5.
+Your call audio and transcripts are handled by our voice infrastructure provider, **Vapi**, and its model and transcription sub-providers (OpenAI for extraction, Deepgram for transcription). See Section 5.
 
-**Data retention by our voice provider (ZDR: ON).** We have enabled **Zero Data Retention (ZDR)** on our Vapi organization. With ZDR active, Vapi does **not** retain call recordings, transcripts, messages, summaries, or structured outputs after a call ends — it processes them in real time and discards them. Vapi retains only operational metadata (call history, cost, latency) needed for billing and the dashboard. [Operator: confirm ZDR shows as enabled in the Vapi Dashboard (Settings → Add-ons) before publishing; ZDR is a dashboard add-on, not a code setting.]
+**Zero Data Retention.** We have enabled Zero Data Retention (ZDR) on our Vapi account. With ZDR active, Vapi does **not** retain call recordings, transcripts, messages, summaries, or structured outputs after a call ends — it processes them in real time and discards them. Vapi keeps only the operational metadata (call history, cost, latency) needed to run the Service and show your dashboard.
 
-## 5. Who we share information with (our processors)
+## 5. The companies we work with
 
-We use the following third-party services to operate PawVoice. Each processes a limited slice of your information solely to provide their part of the Service:
+We use the following service providers to operate PawVoice. Each handles only the information needed to perform its function, and only to provide the Service:
 
-| Provider | What they process | Purpose |
+| Provider | What it processes | Why |
 |---|---|---|
-| **Vapi** | Call audio, phone numbers, call metadata | Telephony and voice AI orchestration (ZDR-enabled) |
-| **OpenAI** (via Vapi) | Call transcripts | Extracting structured activity data from what you say |
-| **Deepgram** (via Vapi) | Call audio | Speech-to-text transcription |
+| **Vapi** | Call audio, phone numbers, call metadata | Telephony and voice AI (ZDR enabled) |
+| **OpenAI** (via Vapi) | Call transcripts | Turning your words into structured activity entries |
+| **Deepgram** (via Vapi) | Call audio | Converting speech to text |
 | **Creem** | Email, payment amount, payment status | Payment processing, checkout, and billing |
-| **Convex** | All account, pet, and log data | Application database and hosting |
-| **Resend** | Email address | Sending account verification and invite emails |
+| **Convex** | All account, pet, and log data | Database and hosting |
+| **Resend** | Email address | Sending verification and invite emails |
 
-We may add or change providers as the Service evolves; material changes will be reflected here.
+We may add or replace providers as the Service changes; any material change will be reflected here.
 
-## 6. Data retention
+## 6. How long we keep your information
 
-- We retain your account, pet, and log data for as long as your account is active.
-- Our default is to delete inactive account data **24 months** after the most recent activity, unless you delete it sooner.
-- Call audio/transcripts are not retained by our voice provider (ZDR: ON).
-- **You can delete your account and all associated data yourself, at any time, from Settings → Delete account.** This permanently removes your profile, the pets you own, activity logs, call history, and payment records. You may also request deletion by contacting **gntulu@gmail.com**. We act on deletion requests within a reasonable time (recommended: **30 days**), except where we must retain certain records (e.g., payment records) for legal or accounting purposes.
+- We keep your account, pet, and log data for as long as your account is active.
+- By default, we delete inactive account data **24 months** after your last activity, whether or not you've asked us to.
+- Recordings and transcripts are not retained by our voice provider (ZDR is on).
+- **You can delete your account and all of its data yourself at any time** from **Settings → Delete account**. This permanently removes your profile, the pets you own, activity logs, call history, and payment records. You can also email us at **gntulu@gmail.com**. We act on deletion requests promptly, normally within 30 days, except where we must keep certain records for legal or accounting reasons.
 
 ## 7. Your rights
 
-Depending on where you live, you may have rights to access, correct, export, or delete your personal information, and to object to or restrict certain processing, including under the EU/UK GDPR and US state privacy laws (e.g., CCPA) where they apply to you.
+Depending on where you live, you may have rights to access, correct, delete, or export your personal information, and to object to or restrict certain uses, including under the EU/UK GDPR and US state laws such as the CCPA where they apply to you.
 
-To exercise these rights, use the in-app deletion flow or contact us at **gntulu@gmail.com**. We'll respond within a reasonable time and may verify your identity first.
+To use any of these rights, use the in-app deletion flow or contact us at **gntulu@gmail.com**. We may ask you to verify your identity first, and we'll get back to you as soon as we reasonably can.
 
 ## 8. International data transfers
 
-We are based in **Kenya**, and several providers (Section 5) are based in, or process data in, the United States. Your information may be transferred to and processed in countries other than your own, with different data-protection laws. By using the Service, you understand and accept this. [If you serve EU/UK users, add the specific transfer mechanism (e.g., Standard Contractual Clauses) here after legal review.]
+We are based in **Kenya**, and several of our providers operate in, or process data within, the United States. Your information may be transferred to and processed in countries other than your own, where data-protection laws may differ. By using the Service, you understand and agree to this transfer.
 
 ## 9. Cookies and tracking
 
-We use only the cookies and local storage strictly necessary to keep you logged in and run the Service (set by our authentication provider, Better Auth). We do **not** use third-party advertising or analytics cookies, and we do not run visitor-tracking scripts.
+We only use cookies and local storage strictly necessary to keep you logged in and run the Service (set by our authentication provider, Better Auth). We do **not** use advertising or analytics cookies, and we do not run visitor-tracking scripts.
 
-## 10. Children's privacy
+## 10. Children
 
-The Service is not directed at, and not intended for, anyone under 18. We do not knowingly collect personal information from children. If you believe a child has provided us information, contact **gntulu@gmail.com** and we will delete it.
+The Service is not for anyone under 18, and we don't knowingly collect personal information from children. If you believe a child has given us information, please contact us at **gntulu@gmail.com** and we will delete it.
 
 ## 11. Security
 
-We take reasonable measures to protect your information, but no transmission or storage method is completely secure, and we cannot guarantee absolute security.
+We take reasonable steps to protect your information, but no method of transmission or storage is completely secure, and we can't guarantee absolute security.
 
 ## 12. Changes to this policy
 
-We may update this Privacy Policy from time to time. Material changes will be communicated to you (e.g., by email) before they take effect.
+We may update this Privacy Policy from time to time. If we make material changes, we'll let you know (by email, notice in the app, or both) before they take effect.
 
 ## 13. Contact
 
-Questions or data-rights requests: **gntulu@gmail.com**
+Questions about privacy? Email **gntulu@gmail.com**.
+
+---
+
+*These terms are provided for informational purposes and do not constitute legal advice. If you operate in a regulated industry or serve users in the EU, UK, California, or other jurisdictions with comprehensive privacy laws, have them reviewed by a lawyer.*
