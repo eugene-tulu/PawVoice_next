@@ -8,32 +8,30 @@
  */
 
 @theme inline {
-  /* --- Paper (warm-cream, slightly lifted) --- */
-  --color-paper:    oklch(98% 0.012 80);
-  --color-paper-2:  oklch(95% 0.014 80);
-  --color-paper-3:  oklch(91% 0.016 78);
-
-  /* --- Depth surfaces (for layered cards / glass) --- */
-  --color-surface:    oklch(100% 0 0);
-  --color-surface-2:  oklch(97% 0.008 80);
-  --color-raise:      oklch(99% 0.01 80);
-
-  /* --- Neutrals (tinted warm) --- */
-  --color-rule:     oklch(86% 0.012 80);
-  --color-rule-2:   oklch(90% 0.012 80);
-  --color-neutral:  oklch(54% 0.008 80);
-  --color-muted:    oklch(45% 0.010 70);
-
-  /* --- Ink (warm dark) --- */
-  --color-ink:      oklch(21% 0.012 60);
-  --color-ink-2:    oklch(40% 0.014 60);
-
-  /* --- Accent (terracotta) + tints --- */
-  --color-accent:   oklch(54% 0.19 32);
-  --color-accent-2: oklch(64% 0.18 36);
-  --color-focus:    oklch(50% 0.22 32);
-  --color-accent-soft: oklch(93% 0.07 42);
-  --color-accent-soft-hover: oklch(89% 0.07 42);
+  /* Color aliases.
+     Values are CSS variables themed in :root / .dark (named --pw-* to avoid
+     clobbering). Because these resolve to a var(), Tailwind cannot bake them
+     into a static literal, so utilities like bg-paper / text-ink / border-rule
+     emit `var(--color-*)` and switch with the .dark overrides. (Baked literals
+     were why dark mode only flipped cards/footer.) See Tailwind v4 docs:
+     "Colors → Referencing other variables". */
+  --color-paper:    var(--pw-paper);
+  --color-paper-2:  var(--pw-paper-2);
+  --color-paper-3:  var(--pw-paper-3);
+  --color-surface:    var(--pw-surface);
+  --color-surface-2:  var(--pw-surface-2);
+  --color-raise:      var(--pw-raise);
+  --color-rule:     var(--pw-rule);
+  --color-rule-2:   var(--pw-rule-2);
+  --color-neutral:  var(--pw-neutral);
+  --color-muted:    var(--pw-muted);
+  --color-ink:      var(--pw-ink);
+  --color-ink-2:    var(--pw-ink-2);
+  --color-accent:   var(--pw-accent);
+  --color-accent-2: var(--pw-accent-2);
+  --color-focus:    var(--pw-focus);
+  --color-accent-soft: var(--pw-accent-soft);
+  --color-accent-soft-hover: var(--pw-accent-soft-hover);
 
   /* Typography tokens (next/font sets the variable values) */
   --font-display: var(--font-display);
@@ -57,26 +55,47 @@
    Elevation expressed through lightness: page is darkest, cards raise.
    Accent keeps the light-mode hue, with lifted lightness + reduced chroma. */
 .dark {
-  --color-paper:    oklch(12% 0.010 55);   /* page background — deep warm */
-  --color-paper-2:  oklch(15% 0.011 55);
-  --color-paper-3:  oklch(19% 0.012 55);
-  --color-surface:    oklch(14% 0.011 55); /* card base — lighter than page */
-  --color-surface-2:  oklch(17% 0.012 55);
-  --color-raise:      oklch(20% 0.013 55); /* elevated cards */
-  --color-rule:     oklch(28% 0.009 55);
-  --color-rule-2:   oklch(23% 0.009 55);
-  --color-neutral:  oklch(55% 0.010 55);
-  --color-muted:    oklch(60% 0.009 55);
-  --color-ink:      oklch(92% 0.005 70);   /* primary text — warm white */
-  --color-ink-2:    oklch(76% 0.008 65);   /* secondary text */
-  --color-accent:   oklch(71% 0.15 32);    /* lifted + desaturated vs light (54% 0.19 32) */
-  --color-accent-2: oklch(77% 0.14 35);
-  --color-focus:    oklch(73% 0.16 32);
-  --color-accent-soft: oklch(22% 0.045 32); /* subtle dark terracotta tint for badges/soft bgs */
-  --color-accent-soft-hover: oklch(28% 0.06 32);
+  --pw-paper:    oklch(12% 0.010 55);   /* page background — deep warm */
+  --pw-paper-2:  oklch(15% 0.011 55);
+  --pw-paper-3:  oklch(19% 0.012 55);
+  --pw-surface:    oklch(14% 0.011 55); /* card base — lighter than page */
+  --pw-surface-2:  oklch(17% 0.012 55);
+  --pw-raise:      oklch(20% 0.013 55); /* elevated cards */
+  --pw-rule:     oklch(28% 0.009 55);
+  --pw-rule-2:   oklch(23% 0.009 55);
+  --pw-neutral:  oklch(55% 0.010 55);
+  --pw-muted:    oklch(60% 0.009 55);
+  --pw-ink:      oklch(92% 0.005 70);   /* primary text — warm white */
+  --pw-ink-2:    oklch(76% 0.008 65);   /* secondary text */
+  --pw-accent:   oklch(71% 0.15 32);    /* lifted + desaturated vs light */
+  --pw-accent-2: oklch(77% 0.14 35);
+  --pw-focus:    oklch(73% 0.16 32);
+  --pw-accent-soft: oklch(22% 0.045 32); /* subtle dark terracotta tint */
+  --pw-accent-soft-hover: oklch(28% 0.06 32);
 }
 
 :root {
+  /* --- Palette (light). Overridden in .dark for dark mode. Source vars are
+        named --pw-* so the @theme aliases (--color-*) can be emitted without
+        clobbering them. --- */
+  --pw-paper:    oklch(98% 0.012 80);
+  --pw-paper-2:  oklch(95% 0.014 80);
+  --pw-paper-3:  oklch(91% 0.016 78);
+  --pw-surface:    oklch(100% 0 0);
+  --pw-surface-2:  oklch(97% 0.008 80);
+  --pw-raise:      oklch(99% 0.01 80);
+  --pw-rule:     oklch(86% 0.012 80);
+  --pw-rule-2:   oklch(90% 0.012 80);
+  --pw-neutral:  oklch(54% 0.008 80);
+  --pw-muted:    oklch(45% 0.010 70);
+  --pw-ink:      oklch(21% 0.012 60);
+  --pw-ink-2:    oklch(40% 0.014 60);
+  --pw-accent:   oklch(54% 0.19 32);
+  --pw-accent-2: oklch(64% 0.18 36);
+  --pw-focus:    oklch(50% 0.22 32);
+  --pw-accent-soft: oklch(93% 0.07 42);
+  --pw-accent-soft-hover: oklch(89% 0.07 42);
+
   --ease-out: cubic-bezier(0.25, 0.1, 0.25, 1);
   --ease-in: cubic-bezier(0.42, 0, 1, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -174,7 +193,7 @@ a:hover {
 .card-raise:hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow-lg);
-  border-color: oklch(56% 0.17 33 / 0.35);
+  border-color: color-mix(in srgb, var(--color-accent) 35%, transparent);
 }
 
 /* ---- Buttons ---- */
@@ -238,7 +257,7 @@ a:hover {
 .field:focus {
   outline: none;
   border-color: var(--color-focus);
-  box-shadow: 0 0 0 3px oklch(56% 0.17 33 / 0.18);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-focus) 18%, transparent);
 }
 
 /* Eyebrow / kicker label */

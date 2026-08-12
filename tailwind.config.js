@@ -2,29 +2,25 @@ module.exports = {
   content: [
     "./src/**/*.{js,jsx,ts,tsx}",
   ],
+  // Color palette lives in src/app/globals.css: light values in :root (as
+  // --pw-* source vars) and dark values in .dark, with @theme aliases
+  // (--color-* : var(--pw-*)) that make Tailwind emit dynamic var()-based
+  // utilities (bg-paper, text-ink, …). Using var() values means Tailwind
+  // cannot bake them to static literals, so dark mode actually flips the whole
+  // UI (not just hand-written .card/footer rules). Fonts/sizes/spacing stay
+  // here since they don't need theme switching.
   theme: {
     extend: {
-      colors: {
-        paper: "oklch(96% 0.015 80)",
-        paper2: "oklch(93% 0.018 80)",
-        ink: "oklch(20% 0.012 60)",
-        ink2: "oklch(40% 0.014 60)",
-        rule: "oklch(82% 0.012 80)",
-        neutral: "oklch(56% 0.008 80)",
-        muted: "oklch(44% 0.010 70)",
-        accent: "oklch(58% 0.16 35)",
-        focus: "oklch(55% 0.20 35)",
-      },
       fontFamily: {
         display: ["var(--font-display)", "Georgia", "serif"],
         body: ["var(--font-body)", "system-ui", "sans-serif"],
         mono: ["var(--font-mono)", "ui-monospace", "monospace"],
       },
       fontSize: {
-        xs: "0.64rem",
-        sm: "0.8rem",
+        xs: "0.72rem",
+        sm: "0.875rem",
         base: "1rem",
-        md: "1.25rem",
+        md: "1.125rem",
         lg: "1.5625rem",
         xl: "1.953rem",
         "2xl": "2.441rem",
@@ -41,4 +37,4 @@ module.exports = {
     },
   },
   plugins: [],
-}
+};
