@@ -72,13 +72,13 @@ We may add or replace providers as the Service changes; any material change will
 - We keep your account, pet, and log data for as long as your account is active.
 - By default, we delete inactive account data **24 months** after your last activity, whether or not you've asked us to.
 - Recordings and transcripts are not retained by our voice provider (ZDR is on).
-- **You can delete your account and all of its data yourself at any time** from **Settings → Delete account**. This permanently removes your profile, the pets you own, activity logs, call history, and payment records. You can also email us at **gntulu@gmail.com**. We act on deletion requests promptly, normally within 30 days, except where we must keep certain records for legal or accounting reasons.
+- **You can delete your account and all of its data yourself at any time** from **Settings → Delete account**. This permanently removes your profile, the pets you own, activity logs, call history, and payment records. You can also email us at **support@pawvoice.xyz**. We act on deletion requests promptly, normally within 30 days, except where we must keep certain records for legal or accounting reasons.
 
 ## 7. Your rights
 
 Depending on where you live, you may have rights to access, correct, delete, or export your personal information, and to object to or restrict certain uses, including under the EU/UK GDPR and US state laws such as the CCPA where they apply to you.
 
-To use any of these rights, use the in-app deletion flow or contact us at **gntulu@gmail.com**. We may ask you to verify your identity first, and we'll get back to you as soon as we reasonably can.
+To use any of these rights, use the in-app deletion flow or contact us at **support@pawvoice.xyz**. We may ask you to verify your identity first, and we'll get back to you as soon as we reasonably can.
 
 ## 8. International data transfers
 
@@ -90,7 +90,7 @@ We only use cookies and local storage strictly necessary to keep you logged in a
 
 ## 10. Children
 
-The Service is not for anyone under 18, and we don't knowingly collect personal information from children. If you believe a child has given us information, please contact us at **gntulu@gmail.com** and we will delete it.
+The Service is not for anyone under 18, and we don't knowingly collect personal information from children. If you believe a child has given us information, please contact us at **support@pawvoice.xyz** and we will delete it.
 
 ## 11. Security
 
@@ -102,7 +102,7 @@ We may update this Privacy Policy from time to time. If we make material changes
 
 ## 13. Contact
 
-Questions about privacy? Email **gntulu@gmail.com**.
+Questions about privacy? Email **support@pawvoice.xyz**.
 
 ---
 

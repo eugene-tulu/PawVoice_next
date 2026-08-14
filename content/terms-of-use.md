@@ -83,7 +83,7 @@ These Terms are governed by the laws of **Kenya**, without regard to conflict-of
 
 ## 12. Contact
 
-Questions about these Terms? Email **gntulu@gmail.com**.
+Questions about these Terms? Email **support@pawvoice.xyz**.
 
 ---
 

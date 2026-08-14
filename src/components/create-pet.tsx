@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useMutation } from "convex/react";
+import { ConvexError } from "convex/values";
 import { api } from "../../convex/_generated/api";
 
 export default function CreatePet({ onSuccess }: { onSuccess?: (id: string) => void }) {
@@ -24,7 +25,11 @@ export default function CreatePet({ onSuccess }: { onSuccess?: (id: string) => v
       onSuccess?.(id);
       e.currentTarget.reset();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create pet");
+      if (err instanceof ConvexError) {
+        setError(typeof err.data === "string" ? err.data : "Failed to create pet");
+      } else {
+        setError(err instanceof Error ? err.message : "Failed to create pet");
+      }
     } finally {
       setLoading(false);
     }

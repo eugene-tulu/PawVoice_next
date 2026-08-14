@@ -1,5 +1,5 @@
 // convex/pets.ts
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
 
@@ -20,10 +20,10 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    if (!identity) throw new ConvexError("Not authenticated");
     const user = await currentUser(ctx, identity.subject);
-    if (!user) throw new Error("User not found");
-    if (!user.phone) throw new Error("Add a phone number before creating a pet");
+    if (!user) throw new ConvexError("User not found");
+    if (!user.phone) throw new ConvexError("Add a phone number before creating a pet");
 
     const now = Date.now();
     const petId = await ctx.db.insert("pets", {
@@ -115,9 +115,9 @@ export const update = mutation({
   },
   handler: async (ctx, { petId, ...patch }) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    if (!identity) throw new ConvexError("Not authenticated");
     const user = await currentUser(ctx, identity.subject);
-    if (!user) throw new Error("User not found");
+    if (!user) throw new ConvexError("User not found");
 
     const isOwner = await ctx.db
       .query("petMembers")
@@ -129,7 +129,7 @@ export const update = mutation({
         )
       )
       .first();
-    if (!isOwner) throw new Error("Not authorized to edit this pet");
+    if (!isOwner) throw new ConvexError("Not authorized to edit this pet");
 
     const update: Record<string, unknown> = {};
     if (patch.name) update.name = patch.name.trim();
