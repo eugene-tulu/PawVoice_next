@@ -5,9 +5,12 @@
 // email verified, at least one pet, and credits sufficient. Phone number
 // is optional for web calls (authId is passed via metadata instead).
 import { query } from "./_generated/server";
-import { BUFFER_CENTS } from "./billing";
 
 const ASSISTANT_ID = process.env.VAPI_ASSISTANT_ID ?? "";
+// $5 overdraft buffer. Inlined (NOT imported from ./billing) so this V8-sandbox
+// query does not pull the Node.js-only `resend` dependency into its bundle via
+// the billing module graph (this was causing an opaque "Server Error").
+const BUFFER_CENTS = 500;
 
 export type PrepareResult =
   | { ok: false; reason: string }

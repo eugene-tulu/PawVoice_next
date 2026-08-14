@@ -2,7 +2,9 @@
 import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { normalizePhone } from "./lib/phone";
-import { BUFFER_CENTS } from "./billing";
+// $5 overdraft buffer. Inlined (NOT imported from ./billing) so this V8-sandbox
+// httpAction does not pull the Node.js-only `resend` dependency into its bundle.
+const BUFFER_CENTS = 500;
 
 const WEBHOOK_SECRET = process.env.VAPI_WEBHOOK_SECRET ?? "";
 const ASSISTANT_ID = process.env.VAPI_ASSISTANT_ID ?? "";
