@@ -266,7 +266,7 @@ export default function PetDetail() {
                 </button>
                 <button
                   onClick={handleSaveEdit}
-                  className="px-3 py-1 bg-accent text-paper rounded text-sm font-medium hover:bg-ink transition-colors"
+                  className="px-3 py-1 bg-accent text-paper rounded text-sm font-medium hover:bg-ink hover:text-paper transition-colors"
                 >
                   Save
                 </button>
@@ -351,7 +351,7 @@ export default function PetDetail() {
             <button
               type="submit"
               disabled={inviteLoading}
-              className="px-4 py-2 bg-accent text-paper rounded text-sm font-medium hover:bg-ink transition-colors disabled:opacity-60"
+              className="px-4 py-2 bg-accent text-paper rounded text-sm font-medium hover:bg-ink hover:text-paper transition-colors disabled:opacity-60"
             >
               {inviteLoading ? "Sending…" : "Send invite"}
             </button>

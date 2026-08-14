@@ -65,7 +65,7 @@ export default function VerifyEmailPage() {
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => router.push("/login")}
-            className="px-6 py-3 bg-accent text-paper rounded-full font-medium hover:bg-ink transition-colors"
+            className="px-6 py-3 bg-accent text-paper rounded-full font-medium hover:bg-ink hover:text-paper transition-colors"
           >
             Go to Sign In
           </motion.button>
@@ -117,7 +117,7 @@ export default function VerifyEmailPage() {
                 className={`w-full py-3 px-4 rounded-xl font-medium text-paper shadow-md transition-colors ${
                   sending
                     ? "bg-muted"
-                    : "bg-accent hover:bg-ink"
+                    : "bg-accent hover:bg-ink hover:text-paper"
                 }`}
               >
                 {sending ? (

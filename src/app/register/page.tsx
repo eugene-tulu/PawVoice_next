@@ -75,7 +75,7 @@ export default function RegisterPage() {
           type="button"
           onClick={handleResend}
           disabled={sending}
-          className="w-full px-4 py-2.5 mt-4 bg-accent text-paper rounded-lg font-medium hover:bg-ink transition-colors disabled:opacity-60"
+          className="w-full px-4 py-2.5 mt-4 bg-accent text-paper rounded-lg font-medium hover:bg-ink hover:text-paper transition-colors disabled:opacity-60"
         >
           {sending ? "Sending…" : "Resend verification email"}
         </button>
@@ -122,7 +122,7 @@ export default function RegisterPage() {
         />
         <button
           type="submit"
-          className="w-full px-4 py-2.5 mt-2 bg-accent text-paper rounded-lg font-medium hover:bg-ink transition-colors"
+          className="w-full px-4 py-2.5 mt-2 bg-accent text-paper rounded-lg font-medium hover:bg-ink hover:text-paper transition-colors"
         >
           Create account
         </button>

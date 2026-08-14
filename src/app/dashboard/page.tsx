@@ -154,7 +154,7 @@ export default function Dashboard() {
             )}
             <Link
               href="/call"
-              className="inline-block px-4 py-2 bg-accent text-paper rounded-lg font-medium hover:bg-ink transition-colors"
+              className="inline-block px-4 py-2 bg-accent text-paper rounded-lg font-medium hover:bg-ink hover:text-paper transition-colors"
             >
               Start web call
             </Link>

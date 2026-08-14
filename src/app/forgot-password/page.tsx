@@ -51,7 +51,7 @@ export default function ForgotPasswordPage() {
         <button
           type="button"
           onClick={() => router.push("/login")}
-          className="w-full px-4 py-2.5 mt-4 bg-accent text-paper rounded-lg font-medium hover:bg-ink transition-colors"
+          className="w-full px-4 py-2.5 mt-4 bg-accent text-paper rounded-lg font-medium hover:bg-ink hover:text-paper transition-colors"
         >
           Back to sign in
         </button>
@@ -84,7 +84,7 @@ export default function ForgotPasswordPage() {
         <button
           type="submit"
           disabled={status === "sending"}
-          className="w-full px-4 py-2.5 mt-2 bg-accent text-paper rounded-lg font-medium hover:bg-ink transition-colors disabled:opacity-60"
+          className="w-full px-4 py-2.5 mt-2 bg-accent text-paper rounded-lg font-medium hover:bg-ink hover:text-paper transition-colors disabled:opacity-60"
         >
           {status === "sending" ? "Sending…" : "Send reset link"}
         </button>

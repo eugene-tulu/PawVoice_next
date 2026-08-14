@@ -66,7 +66,7 @@ export default function InvitePage() {
         <button
           onClick={handleAccept}
           disabled={loading}
-          className="w-full px-6 py-3 bg-accent text-paper rounded-full font-medium hover:bg-ink transition-colors disabled:opacity-60"
+          className="w-full px-6 py-3 bg-accent text-paper rounded-full font-medium hover:bg-ink hover:text-paper transition-colors disabled:opacity-60"
         >
           {loading ? "Accepting…" : "Accept invitation"}
         </button>
