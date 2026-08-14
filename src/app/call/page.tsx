@@ -1,8 +1,9 @@
 // src/app/call/page.tsx
 "use client";
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useQuery } from "convex/react";
+import { useQuery, useConvex } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import { PrepareResult } from "../../../convex/webCall";
 import { useRouter } from "next/navigation";
 import { SiteNav } from "@/components/site-nav";
 import { useToast } from "@/components/toast";
@@ -35,9 +36,9 @@ function formatDuration(ms: number): string {
 export default function CallPage() {
   const authStatus = useQuery(api.auth.getAuthStatus);
   const me = useQuery(api.users.me);
-  const callConfig = useQuery(api.webCall.prepare);
   const router = useRouter();
   const toast = useToast();
+  const convex = useConvex();
 
   const [callState, setCallState] = useState<CallState>("idle");
   const [elapsed, setElapsed] = useState(0);
@@ -64,6 +65,15 @@ export default function CallPage() {
     setTranscript((prev) => [...prev, item]);
   }, []);
 
+  const disposeVapi = useCallback(() => {
+    const instance = vapiRef.current;
+    if (instance) {
+      instance.removeAllListeners();
+      void instance.stop().catch(() => {});
+      vapiRef.current = null;
+    }
+  }, []);
+
   const startCall = useCallback(async () => {
     if (!PUBLIC_KEY) {
       setError("Vapi public key is not configured");
@@ -73,6 +83,19 @@ export default function CallPage() {
 
     setCallState("preparing");
     setError(null);
+
+    // Clean up any previous Vapi instance to prevent EventEmitter listener leaks
+    disposeVapi();
+
+    // Fetch call config imperatively so a Convex server error doesn't crash the page
+    let callConfig: PrepareResult | null = null;
+    try {
+      callConfig = await convex.query(api.webCall.prepare);
+    } catch (e) {
+      setCallState("idle");
+      setError(e instanceof Error ? e.message : "Failed to load call configuration");
+      return;
+    }
 
     if (!callConfig || !callConfig.ok) {
       setCallState("idle");
@@ -185,7 +208,7 @@ export default function CallPage() {
       setCallState("idle");
       setError(e instanceof Error ? e.message : "Failed to start call");
     }
-  }, [me, callConfig, addTranscript, toast]);
+  }, [me, convex, disposeVapi, addTranscript, toast]);
 
   const endCall = useCallback(async () => {
     const instance = vapiRef.current;
@@ -196,6 +219,7 @@ export default function CallPage() {
     } catch (e) {
       console.error("Error stopping call:", e);
     }
+    instance.removeAllListeners();
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
@@ -220,12 +244,9 @@ export default function CallPage() {
         clearInterval(timerRef.current);
         timerRef.current = null;
       }
-      const instance = vapiRef.current;
-      if (instance) {
-        void instance.stop();
-      }
+      disposeVapi();
     };
-  }, []);
+  }, [disposeVapi]);
 
   const isReady = authStatus?.status === "authenticated" && authStatus.emailVerified;
   const active = callState !== "idle" && callState !== "preparing";
@@ -334,18 +355,10 @@ export default function CallPage() {
               <span className={`text-sm font-medium ${stateColor}`}>{stateLabel}</span>
               <button
                 onClick={startCall}
-                disabled={
-                  callState === "preparing" ||
-                  !isReady ||
-                  callConfig === undefined
-                }
-                className="px-6 py-3 bg-accent text-paper rounded-full font-medium hover:bg-ink transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                disabled={callState === "preparing" || !isReady}
+                className="px-6 py-3 bg-accent text-paper rounded-full font-medium hover:bg-ink hover:text-paper transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                {callState === "preparing"
-                  ? "…"
-                  : callConfig === undefined
-                  ? "Loading…"
-                  : "Start web call"}
+                {callState === "preparing" ? "…" : "Start web call"}
               </button>
             </>
           )}

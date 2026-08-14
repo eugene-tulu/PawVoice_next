@@ -9,7 +9,7 @@ import { BUFFER_CENTS } from "./billing";
 
 const ASSISTANT_ID = process.env.VAPI_ASSISTANT_ID ?? "";
 
-type PrepareResult =
+export type PrepareResult =
   | { ok: false; reason: string }
   | {
       ok: true;
