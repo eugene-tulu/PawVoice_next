@@ -9,6 +9,7 @@ import { SiteNav } from "@/components/site-nav";
 import { useToast } from "@/components/toast";
 import MedicalDisclaimer from "@/components/medical-disclaimer";
 import Vapi from "@vapi-ai/web";
+import { track } from "@vercel/analytics";
 
 const PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY ?? "";
 // Optional override for the Vapi API base URL (defaults to https://api.vapi.ai
@@ -63,6 +64,11 @@ export default function CallPage() {
   const [muted, setMuted] = useState(false);
   const [volume, setVolume] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  // Post-call feedback. Shown after a call ends; submitted as a Vercel
+  // Analytics event (no backend storage needed for v1).
+  const [showRating, setShowRating] = useState(false);
+  const [rating, setRating] = useState<"up" | "down" | null>(null);
+  const [ratingComment, setRatingComment] = useState("");
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const vapiRef = useRef<Vapi | null>(null);
   const listenersAttachedRef = useRef(false);
@@ -231,6 +237,7 @@ export default function CallPage() {
 
       instance.on("call-end", () => {
         setCallStateAndReset("idle");
+        setShowRating(true);
       });
 
       instance.on("call-start-failed", (e: unknown) => {
@@ -285,6 +292,9 @@ export default function CallPage() {
     startingRef.current = true;
     setCallState("preparing");
     setError(null);
+    setShowRating(false);
+    setRating(null);
+    setRatingComment("");
 
     // Fetch call config imperatively so a Convex server error doesn't crash the page
     let callConfig: PrepareResult | null = null;
@@ -314,6 +324,9 @@ export default function CallPage() {
     try {
       await instance.start(callConfig.assistantId, {
         metadata: { authId: me!.authId },
+        // Inject the user's pet list into the assistant prompt so it logs for
+        // the correct pet without having to ask.
+        variableValues: { pets: callConfig.petContext ?? "" },
       });
     } catch (e) {
       startingRef.current = false;
@@ -353,6 +366,17 @@ export default function CallPage() {
       setMuted(!next);
     }
   }, [muted]);
+
+  const submitRatingUp = useCallback(() => {
+    track("call_rated", { rating: "up" });
+    setShowRating(false);
+  }, []);
+
+  const submitRatingDown = useCallback(() => {
+    const comment = ratingComment.trim();
+    track("call_rated", comment ? { rating: "down", comment } : { rating: "down" });
+    setShowRating(false);
+  }, [ratingComment]);
 
   useEffect(() => {
     return () => {
@@ -502,6 +526,56 @@ export default function CallPage() {
             </>
           )}
         </div>
+
+        {showRating && (
+          <div className="border border-rule rounded-lg p-5 mb-6">
+            <p className="text-sm font-medium text-ink mb-3">
+              How did this call go?
+            </p>
+            {rating !== "down" ? (
+              <div className="flex gap-2">
+                <button
+                  onClick={submitRatingUp}
+                  className="px-4 py-2 rounded-full border border-rule text-ink hover:bg-paper-2 transition-colors"
+                  aria-label="Good call"
+                >
+                  👍 Good
+                </button>
+                <button
+                  onClick={() => setRating("down")}
+                  className="px-4 py-2 rounded-full border border-rule text-ink hover:bg-paper-2 transition-colors"
+                  aria-label="Bad call"
+                >
+                  👎 Something off
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <textarea
+                  value={ratingComment}
+                  onChange={(e) => setRatingComment(e.target.value)}
+                  placeholder="What went wrong? (optional)"
+                  rows={3}
+                  className="w-full px-3 py-2 border border-rule rounded-lg text-sm bg-paper-2 text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-focus resize-none"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={submitRatingDown}
+                    className="px-4 py-2 bg-accent text-paper rounded-full font-medium hover:bg-ink transition-colors"
+                  >
+                    Send feedback
+                  </button>
+                  <button
+                    onClick={() => setShowRating(false)}
+                    className="px-4 py-2 rounded-full border border-rule text-ink hover:bg-paper-2 transition-colors"
+                  >
+                    Skip
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {!active && isReady && me && (
           <div className="mt-8 border-t border-rule pt-8">

@@ -5,6 +5,7 @@
 // email verified, at least one pet, and credits sufficient. Phone number
 // is optional for web calls (authId is passed via metadata instead).
 import { query } from "./_generated/server";
+import { internal } from "./_generated/api";
 
 const ASSISTANT_ID = process.env.VAPI_ASSISTANT_ID ?? "";
 // $5 overdraft buffer. Inlined (NOT imported from ./billing) so this V8-sandbox
@@ -19,6 +20,9 @@ export type PrepareResult =
       assistantId: string;
       credits: number;
       petCount: number;
+      // Spoken-friendly description of the user's pets, injected into the
+      // assistant prompt so it knows pet names and doesn't have to ask.
+      petContext: string;
       warning?: string;
     };
 
@@ -59,11 +63,16 @@ export const prepare = query({
         return { ok: false, reason: "Calling is not configured yet — contact support" };
       }
 
+      const petContext = await ctx.runQuery(internal.pets.petContext, {
+        userId: user._id,
+      });
+
       const result: Extract<PrepareResult, { ok: true }> = {
         ok: true,
         assistantId: ASSISTANT_ID,
         credits,
         petCount: memberships.length,
+        petContext,
       };
 
       if (!user.phone) {

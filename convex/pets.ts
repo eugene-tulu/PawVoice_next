@@ -1,6 +1,6 @@
 // convex/pets.ts
 import { v, ConvexError } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalQuery } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
 
 function currentUser(ctx: { db: import("./_generated/server").DatabaseReader }, authId: string) {
@@ -60,6 +60,30 @@ export const list = query({
       memberships.map((m) => ctx.db.get(m.petId))
     );
     return pets.filter((p): p is Doc<"pets"> => p !== null);
+  },
+});
+
+// Build a short, spoken-friendly description of the user's pets for injection
+// into the assistant's prompt (so it knows the pet names and doesn't have to
+// ask). Server-only (no auth) so it can be called from the Vapi webhook.
+export const petContext = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, { userId }) => {
+    const memberships = await ctx.db
+      .query("petMembers")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+    const pets: string[] = [];
+    for (const m of memberships) {
+      const p = await ctx.db.get(m.petId);
+      if (!p) continue;
+      const breed = p.breed ? ` ${p.breed}` : "";
+      const age = typeof p.age === "number" ? `, ${p.age} yrs` : "";
+      pets.push(`${p.name} (${p.species}${breed}${age})`.trim());
+    }
+    if (pets.length === 0) return "no pets are registered yet";
+    if (pets.length === 1) return `exactly one pet: ${pets[0]}`;
+    return `${pets.length} pets — ${pets.join("; ")}`;
   },
 });
 

@@ -37,6 +37,7 @@ interface VapiEnvelope {
     call?: VapiCall;
     callId?: string;
     customer?: { number?: string };
+    assistant?: { metadata?: Record<string, unknown> };
     toolCallList?: VapiToolCall[];
   };
   call?: VapiCall;
@@ -72,9 +73,19 @@ function extractCall(message: VapiEnvelope): { id: string; customerNumber: strin
     message.customer?.number ??
     call?.phoneNumber?.number ??
     null;
-  // Web calls: authId passes through Vapi call metadata (set on the assistant/web SDK start options).
-  const authId = call?.metadata?.authId ?? null;
-  return { id: call?.id ?? inner?.callId ?? message.callId ?? "", customerNumber: number, authId: typeof authId === "string" ? authId : null };
+  // Web calls: authId is set via the web SDK start() options. Depending on how
+  // Vapi surfaces it, it can land in call.metadata OR the assistant overrides
+  // metadata — check both so the user is always resolved for tool-calls.
+  const authId =
+    call?.metadata?.authId ??
+    inner?.assistant?.metadata?.authId ??
+    message?.message?.assistant?.metadata?.authId ??
+    null;
+  return {
+    id: call?.id ?? inner?.callId ?? message.callId ?? "",
+    customerNumber: number,
+    authId: typeof authId === "string" ? authId : null,
+  };
 }
 
 function readParams(toolCall: VapiToolCall): Record<string, unknown> {
@@ -149,6 +160,13 @@ export const vapiWebhook = httpAction(async (ctx, request) => {
           error: `Your balance is too low. Please add credits at ${SITE}/dashboard before calling. Thank you.`,
         });
       }
+
+      // Feed the caller's pet list into the assistant so it knows the pet
+      // names (and can log for the single pet without asking).
+      const petContext = await ctx.runQuery(internal.pets.petContext, {
+        userId: user._id,
+      });
+
       // Persist the call session once, with the resolved user, so later
       // tool-calls and billing can attribute cost correctly.
       await ctx.runMutation(internal.callSessions.create, {
@@ -159,7 +177,10 @@ export const vapiWebhook = httpAction(async (ctx, request) => {
         startedAt: Date.now(),
         assistantId: ASSISTANT_ID || undefined,
       });
-      return json(200, { assistantId: ASSISTANT_ID });
+      return json(200, {
+        assistantId: ASSISTANT_ID,
+        assistantOverrides: { variableValues: { pets: petContext } },
+      });
     }
 
     case "tool-calls": {
