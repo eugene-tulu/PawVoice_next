@@ -16,7 +16,7 @@ export function ProductPreview() {
           <span className="h-2.5 w-2.5 rounded-full bg-rule" />
           <span className="h-2.5 w-2.5 rounded-full bg-rule" />
           <span className="h-2.5 w-2.5 rounded-full bg-rule" />
-          <span className="ml-3 font-mono text-xs text-muted">app.pawvoice.com — Buster</span>
+          <span className="ml-3 font-mono text-xs text-muted">pawvoice.xyz — Buster</span>
         </div>
 
         <div className="p-5">

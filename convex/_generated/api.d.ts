@@ -31,6 +31,7 @@ import type * as usageEvents from "../usageEvents.js";
 import type * as users from "../users.js";
 import type * as vapi from "../vapi.js";
 import type * as vapiSetup from "../vapiSetup.js";
+import type * as webCall from "../webCall.js";
 
 import type {
   ApiFromModules,
@@ -62,6 +63,7 @@ declare const fullApi: ApiFromModules<{
   users: typeof users;
   vapi: typeof vapi;
   vapiSetup: typeof vapiSetup;
+  webCall: typeof webCall;
 }>;
 
 /**

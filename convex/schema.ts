@@ -96,7 +96,8 @@ export default defineSchema({
   // Tracks a single Vapi call for billing / low-balance pre-check.
   callSessions: defineTable({
     callId: v.string(), // Vapi call.id
-    callerPhone: v.string(), // E.164
+    callerPhone: v.optional(v.string()), // E.164 (null for web calls)
+    authId: v.optional(v.string()), // Better Auth subject (set for web calls)
     userId: v.optional(v.id("users")),
     startedAt: v.number(),
     endedAt: v.optional(v.number()),

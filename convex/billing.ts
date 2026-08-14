@@ -18,15 +18,20 @@ export const MIN_TOPUP_CENTS = 1000; // $10 minimum top-up
 // Called from the Vapi end-of-call-report webhook. Bills the call, records
 // usage, and (best-effort) triggers an auto-refill when the balance is low.
 export const recordBilling = internalAction({
-  args: { callId: v.string(), endedAt: v.optional(v.number()) },
-  handler: async (ctx: ActionCtx, { callId, endedAt }): Promise<{ ok: boolean; costCents?: number; durationSec?: number; reason?: string }> => {
+  args: {
+    callId: v.string(),
+    endedAt: v.optional(v.number()),
+    durationSec: v.optional(v.number()),
+  },
+  handler: async (ctx: ActionCtx, { callId, endedAt, durationSec: reportedSec }): Promise<{ ok: boolean; costCents?: number; durationSec?: number; reason?: string }> => {
     const cs = await ctx.runQuery(internal.callSessions.byCallId, { callId });
     if (!cs) return { ok: false, reason: "no call session" };
 
     const end = endedAt ?? cs.endedAt ?? Date.now();
-    const durationSec = cs.startedAt
-      ? Math.max(0, Math.floor((end - cs.startedAt) / 1000))
-      : 0;
+    // Prefer Vapi's reported duration; fall back to start→end delta.
+    const durationSec =
+      reportedSec ??
+      (cs.startedAt ? Math.max(0, Math.floor((end - cs.startedAt) / 1000)) : 0);
     const costCents = Math.round((durationSec * CENTS_PER_MIN) / 60);
     const now = Date.now();
 

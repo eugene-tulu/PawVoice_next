@@ -47,6 +47,21 @@ export const isMember = internalQuery({
   },
 });
 
+// List all pets a user has access to (with their role on each).
+export const forUser = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, { userId }) => {
+    const memberships = await ctx.db
+      .query("petMembers")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+    const pets = await Promise.all(
+      memberships.map((m) => ctx.db.get(m.petId))
+    );
+    return pets.filter((p): p is NonNullable<typeof p> => p !== null);
+  },
+});
+
 // Add a user to a pet (via invite acceptance).
 export const addMember = internalMutation({
   args: {

@@ -57,18 +57,28 @@ export const logActivity = internalMutation({
     duration: v.optional(v.string()),
     verbatim_notes: v.optional(v.string()),
     callId: v.string(),
-    callerPhone: v.string(),
+    callerPhone: v.optional(v.string()),
+    authId: v.optional(v.string()),
   },
-  handler: async (ctx, { pet, activity_type, duration, verbatim_notes, callId, callerPhone }) => {
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_phone", (q) => q.eq("phone", callerPhone))
-      .first();
+  handler: async (ctx, { pet, activity_type, duration, verbatim_notes, callId, callerPhone, authId }) => {
+    let user = null;
+    if (callerPhone) {
+      user = await ctx.db
+        .query("users")
+        .withIndex("by_phone", (q) => q.eq("phone", callerPhone))
+        .first();
+    }
+    if (!user && authId) {
+      user = await ctx.db
+        .query("users")
+        .withIndex("by_auth_id", (q) => q.eq("authId", authId))
+        .first();
+    }
     if (!user) {
       return {
         ok: false,
         readback:
-          "No account is registered for this phone number. Sign up in the PawVoice app and add this number before calling.",
+          "No account is registered for this caller. Sign up in the PawVoice app before calling. Thank you.",
       };
     }
 
@@ -90,7 +100,7 @@ export const logActivity = internalMutation({
     if (candidates.length === 0) {
       return {
         ok: false,
-        readback: `I couldn't find a pet named ${name} under this phone number. Please check the name or add the pet in the app.`,
+        readback: `I couldn't find a pet named ${name} under your account. Please check the name or add the pet in the app.`,
       };
     }
     if (candidates.length > 1) {
@@ -109,7 +119,7 @@ export const logActivity = internalMutation({
     const id = await ctx.db.insert("logs", {
       petId: chosen._id,
       userId: user._id,
-      callerId: callerPhone,
+      callerId: callerPhone ?? user.authId,
       activityType: activity,
       durationMinutes: minutes ?? undefined,
       durationRaw: duration ?? undefined,
@@ -137,12 +147,13 @@ export const logActivity = internalMutation({
 });
 
 export const undoLastEntry = internalMutation({
-  args: { callId: v.string(), callerPhone: v.string() },
-  handler: async (ctx, { callId, callerPhone }) => {
+  args: { callId: v.string(), callerPhone: v.optional(v.string()), authId: v.optional(v.string()) },
+  handler: async (ctx, { callId, callerPhone, authId }) => {
+    const callerId = callerPhone ?? authId ?? "";
     const last = await ctx.db
       .query("logs")
       .withIndex("by_call", (q) => q.eq("callId", callId))
-      .filter((q) => q.eq(q.field("callerId"), callerPhone))
+      .filter((q) => q.eq(q.field("callerId"), callerId))
       .order("desc")
       .first();
     if (!last) {

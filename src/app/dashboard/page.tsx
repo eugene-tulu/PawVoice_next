@@ -103,7 +103,7 @@ export default function Dashboard() {
               {hasPhone ? (
                 <span className="text-ink font-medium">{user.phone}</span>
               ) : (
-                <span className="text-muted">Not registered</span>
+                <span className="text-muted">Not registered (optional for browser calls)</span>
               )}
             </p>
           </div>
@@ -135,6 +135,30 @@ export default function Dashboard() {
               )}
             </form>
           )}
+        </section>
+
+        <section className="mb-12">
+          <h2 className="font-display text-xl font-semibold text-ink mb-4">
+            Voice call
+          </h2>
+          <div className="border border-rule rounded-lg p-5">
+            <p className="text-sm text-ink-2 mb-3">
+              Call from your browser — speak naturally and PawVoice logs
+              structured entries for each pet. $0.18/min.
+            </p>
+            {!hasPhone && (
+              <p className="text-xs text-muted mb-3">
+                No phone number registered — that&apos;s fine for browser calls.
+                You only need one to let others call your Vapi number by voice.
+              </p>
+            )}
+            <Link
+              href="/call"
+              className="inline-block px-4 py-2 bg-accent text-paper rounded-lg font-medium hover:bg-ink transition-colors"
+            >
+              Start web call
+            </Link>
+          </div>
         </section>
 
         <section className="mb-12">

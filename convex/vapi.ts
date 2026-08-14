@@ -12,6 +12,9 @@ interface VapiCall {
   id?: string;
   customer?: { number?: string };
   phoneNumber?: { number?: string };
+  metadata?: Record<string, unknown>;
+  endedAt?: string | number;
+  durationSeconds?: number;
 }
 
 interface VapiToolCall {
@@ -57,7 +60,7 @@ function json(status: number, body: unknown) {
   });
 }
 
-function extractCall(message: VapiEnvelope): { id: string; customerNumber: string | null } {
+function extractCall(message: VapiEnvelope): { id: string; customerNumber: string | null; authId: string | null } {
   const inner = message?.message;
   const call = inner?.call ?? message.call ?? {};
   // caller number lands in call.customer.number (phone) or message.customer.number
@@ -67,11 +70,33 @@ function extractCall(message: VapiEnvelope): { id: string; customerNumber: strin
     message.customer?.number ??
     call?.phoneNumber?.number ??
     null;
-  return { id: call?.id ?? inner?.callId ?? message.callId ?? "", customerNumber: number };
+  // Web calls: authId passes through Vapi call metadata (set on the assistant/web SDK start options).
+  const authId = call?.metadata?.authId ?? null;
+  return { id: call?.id ?? inner?.callId ?? message.callId ?? "", customerNumber: number, authId: typeof authId === "string" ? authId : null };
 }
 
 function readParams(toolCall: VapiToolCall): Record<string, unknown> {
   return toolCall?.parameters ?? toolCall?.arguments ?? toolCall?.toolCall?.parameters ?? {};
+}
+
+function extractEndedAt(message: VapiEnvelope): number | undefined {
+  const inner = message?.message;
+  const call = inner?.call ?? message.call ?? {};
+  const endedAt = call?.endedAt ?? inner?.call?.endedAt;
+  if (typeof endedAt === "string") {
+    const t = Date.parse(endedAt);
+    return Number.isFinite(t) ? t : undefined;
+  }
+  if (typeof endedAt === "number") return endedAt;
+  return undefined;
+}
+
+function extractDurationSec(message: VapiEnvelope): number | undefined {
+  const inner = message?.message;
+  const call = inner?.call ?? message.call ?? {};
+  const d = call?.durationSeconds ?? inner?.call?.durationSeconds;
+  if (typeof d === "number") return Math.max(0, Math.floor(d));
+  return undefined;
 }
 
 export const vapiWebhook = httpAction(async (ctx, request) => {
@@ -79,24 +104,18 @@ export const vapiWebhook = httpAction(async (ctx, request) => {
 
   const message = (await request.json().catch(() => ({}))) as VapiEnvelope;
   const type = message?.message?.type;
-  const { id: callId, customerNumber } = extractCall(message.message ?? message);
+  const { id: callId, customerNumber, authId } = extractCall(message.message ?? message);
 
   switch (type) {
-    case "assistant-request": {
+     case "assistant-request": {
       const callerPhone = customerNumber
         ? normalizePhone(customerNumber)
         : null;
-      // Persist the call session so later tool-calls / billing can resolve it.
-      await ctx.runMutation(internal.callSessions.create, {
-        callId,
-        callerPhone: callerPhone ?? "unknown",
-        startedAt: Date.now(),
-      });
 
-      if (!callerPhone) {
+      if (!callerPhone && !authId) {
         return json(200, {
           error:
-            "We couldn't read your caller ID. Hang up and try again. Thank you.",
+            "We couldn't identify your account. Make sure you're logged in to the PawVoice app before calling. Thank you.",
         });
       }
       if (!ASSISTANT_ID) {
@@ -105,12 +124,22 @@ export const vapiWebhook = httpAction(async (ctx, request) => {
             "PawVoice calling is not configured yet. Contact support. Thank you.",
         });
       }
-      const user = await ctx.runQuery(internal.users.getByPhone, {
-        phone: callerPhone,
-      });
+
+      let user = null;
+      if (callerPhone) {
+        user = await ctx.runQuery(internal.users.getByPhone, {
+          phone: callerPhone,
+        });
+      }
+      if (!user && authId) {
+        user = await ctx.runQuery(internal.users.getByAuthId, {
+          authId,
+        });
+      }
+
       if (!user) {
         return json(200, {
-          error: `No account is registered for this number. Sign up at ${SITE}/register, then add this phone number in settings, before calling. Thank you.`,
+          error: `No account is registered for this caller. Sign up at ${SITE}/register before calling. Thank you.`,
         });
       }
       if ((user.credits ?? 0) < -BUFFER_CENTS) {
@@ -118,10 +147,12 @@ export const vapiWebhook = httpAction(async (ctx, request) => {
           error: `Your balance is too low. Please add credits at ${SITE}/dashboard before calling. Thank you.`,
         });
       }
-      // Record the caller's user so billing attributes cost correctly.
+      // Persist the call session once, with the resolved user, so later
+      // tool-calls and billing can attribute cost correctly.
       await ctx.runMutation(internal.callSessions.create, {
         callId,
-        callerPhone,
+        callerPhone: callerPhone ?? undefined,
+        authId: authId ?? undefined,
         userId: user._id,
         startedAt: Date.now(),
         assistantId: ASSISTANT_ID || undefined,
@@ -135,12 +166,14 @@ export const vapiWebhook = httpAction(async (ctx, request) => {
         : null;
       // If the envelope lacks caller id, fall back to the session recorded at
       // assistant-request time.
-      let resolvedPhone = callerPhone;
-      if (!resolvedPhone) {
+      let resolvedPhone: string | undefined = callerPhone ?? undefined;
+      let resolvedAuthId: string | undefined = authId ?? undefined;
+      if (!resolvedPhone || !resolvedAuthId) {
         const session = await ctx.runQuery(internal.callSessions.byCallId, {
           callId,
         });
-        resolvedPhone = session?.callerPhone ?? null;
+        resolvedPhone = resolvedPhone ?? session?.callerPhone ?? undefined;
+        resolvedAuthId = resolvedAuthId ?? session?.authId ?? undefined;
       }
 
       const toolCallList: VapiToolCall[] =
@@ -157,19 +190,22 @@ export const vapiWebhook = httpAction(async (ctx, request) => {
           outcome = await ctx.runMutation(internal.logs.logActivity, {
             ...params,
             callId,
-            callerPhone: resolvedPhone ?? "unknown",
+            callerPhone: resolvedPhone ?? undefined,
+            authId: resolvedAuthId ?? undefined,
           } as {
             pet: string;
             activity_type: string;
             duration?: string;
             verbatim_notes?: string;
             callId: string;
-            callerPhone: string;
+            callerPhone?: string;
+            authId?: string;
           });
         } else if (name === "undoLastEntry") {
           outcome = await ctx.runMutation(internal.logs.undoLastEntry, {
             callId,
-            callerPhone: resolvedPhone ?? "unknown",
+            callerPhone: resolvedPhone ?? undefined,
+            authId: resolvedAuthId ?? undefined,
           });
         } else {
           outcome = { ok: false, readback: `Unknown tool ${name}` };
@@ -188,7 +224,13 @@ export const vapiWebhook = httpAction(async (ctx, request) => {
     }
 
     case "end-of-call-report": {
-      await ctx.runAction(internal.billing.recordBilling, { callId });
+      const endedAt = extractEndedAt(message);
+      const durationSec = extractDurationSec(message);
+      await ctx.runAction(internal.billing.recordBilling, {
+        callId,
+        endedAt,
+        ...(durationSec !== undefined ? { durationSec } : {}),
+      });
       return new Response("ok", { status: 200 });
     }
 

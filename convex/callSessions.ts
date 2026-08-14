@@ -6,7 +6,8 @@ import { internalMutation, internalQuery } from "./_generated/server";
 export const create = internalMutation({
   args: {
     callId: v.string(),
-    callerPhone: v.string(),
+    callerPhone: v.optional(v.string()),
+    authId: v.optional(v.string()),
     userId: v.optional(v.id("users")),
     startedAt: v.number(),
     assistantId: v.optional(v.string()),
@@ -19,6 +20,7 @@ export const create = internalMutation({
     if (existing) {
       await ctx.db.patch(existing._id, {
         callerPhone: args.callerPhone,
+        authId: args.authId ?? existing.authId,
         userId: args.userId ?? existing.userId,
         startedAt: args.startedAt,
         assistantId: args.assistantId ?? existing.assistantId,
@@ -28,6 +30,7 @@ export const create = internalMutation({
     return ctx.db.insert("callSessions", {
       callId: args.callId,
       callerPhone: args.callerPhone,
+      authId: args.authId,
       userId: args.userId,
       startedAt: args.startedAt,
       endedAt: undefined,
