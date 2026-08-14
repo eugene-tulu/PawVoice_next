@@ -37,6 +37,19 @@ function formatDuration(ms: number): string {
   return `${m}:${r.toString().padStart(2, "0")}`;
 }
 
+// Coerce any transcript content to a renderable string. Vapi message payloads
+// can nest objects (e.g. a tool-call readback), and rendering an object as JSX
+// children throws React error #31 and crashes the page.
+function toText(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (value === null || value === undefined) return "";
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
 export default function CallPage() {
   const authStatus = useQuery(api.auth.getAuthStatus);
   const me = useQuery(api.users.me);
@@ -149,7 +162,7 @@ export default function CallPage() {
           const role = msg.role === "assistant" ? "assistant" : "user";
           addTranscript({
             role: role as "user" | "assistant",
-            content: msg.transcript,
+            content: toText(msg.transcript),
             ts: Date.now(),
           });
         }
@@ -157,7 +170,7 @@ export default function CallPage() {
         if (type === "model-output" && typeof msg.modelOutput === "string") {
           addTranscript({
             role: "assistant",
-            content: msg.modelOutput,
+            content: toText(msg.modelOutput),
             ts: Date.now(),
           });
         }
@@ -166,7 +179,10 @@ export default function CallPage() {
           let resultText = msg.result;
           try {
             const parsed = JSON.parse(resultText);
-            if (parsed?.readback) {
+            // Only use readback when it's a string; otherwise keep the raw
+            // result text. Using a non-string here (e.g. an object) would get
+            // rendered as a React child and crash the page (React error #31).
+            if (typeof parsed?.readback === "string") {
               resultText = parsed.readback;
             }
           } catch {
@@ -174,7 +190,7 @@ export default function CallPage() {
           }
           addTranscript({
             role: "assistant",
-            content: resultText,
+            content: toText(resultText),
             ts: Date.now(),
           });
         }
@@ -191,7 +207,7 @@ export default function CallPage() {
             if (last?.role === "assistant" && typeof last.content === "string") {
               addTranscript({
                 role: "assistant",
-                content: last.content,
+                content: toText(last.content),
                 ts: Date.now(),
               });
             }
@@ -405,7 +421,7 @@ export default function CallPage() {
                   : "mx-auto text-center text-xs text-muted"
               }`}
             >
-              {item.content}
+              {toText(item.content)}
             </div>
           ))}
         </div>
