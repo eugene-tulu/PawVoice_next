@@ -48,6 +48,8 @@ export default function CallPage() {
   const [error, setError] = useState<string | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const vapiRef = useRef<Vapi | null>(null);
+  const listenersAttachedRef = useRef(false);
+  const startingRef = useRef(false);
 
   useEffect(() => {
     if (authStatus?.status === "unauthenticated") {
@@ -61,15 +63,168 @@ export default function CallPage() {
     }
   }, [authStatus, router]);
 
+  const stopTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
   const addTranscript = useCallback((item: TranscriptItem) => {
     setTranscript((prev) => [...prev, item]);
   }, []);
 
+  const setCallStateAndReset = useCallback(
+    (state: CallState) => {
+      setCallState(state);
+      if (state === "idle") {
+        stopTimer();
+        setTranscript([]);
+        setVolume(0);
+        setMuted(false);
+      }
+    },
+    [stopTimer]
+  );
+
+  const extractError = useCallback((e: unknown): string => {
+    const err = e as {
+      type?: string;
+      message?: string;
+      error?: { message?: string; error?: string };
+    };
+    if (err?.error?.message) return err.error.message;
+    if (err?.error?.error) return err.error.error;
+    if (err?.message) return err.message;
+    return "A call error occurred";
+  }, []);
+
+  const attachListeners = useCallback(
+    (instance: Vapi) => {
+      if (listenersAttachedRef.current) return;
+      listenersAttachedRef.current = true;
+
+      instance.on("message", (message: unknown) => {
+        const msg = message as Record<string, unknown>;
+        const type = typeof msg.type === "string" ? msg.type : "";
+
+        if (type === "transcript" && typeof msg.transcript === "string") {
+          const role = msg.role === "assistant" ? "assistant" : "user";
+          addTranscript({
+            role: role as "user" | "assistant",
+            content: msg.transcript,
+            ts: Date.now(),
+          });
+        }
+
+        if (type === "model-output" && typeof msg.modelOutput === "string") {
+          addTranscript({
+            role: "assistant",
+            content: msg.modelOutput,
+            ts: Date.now(),
+          });
+        }
+
+        if (type === "tool-calls-result" && typeof msg.result === "string") {
+          let resultText = msg.result;
+          try {
+            const parsed = JSON.parse(resultText);
+            if (parsed?.readback) {
+              resultText = parsed.readback;
+            }
+          } catch {
+            // keep raw result
+          }
+          addTranscript({
+            role: "assistant",
+            content: resultText,
+            ts: Date.now(),
+          });
+        }
+
+        if (
+          type === "conversation-update" &&
+          msg.conversation &&
+          typeof msg.conversation === "object"
+        ) {
+          const conv = msg.conversation as { messages?: unknown[] };
+          const msgs = conv.messages ?? [];
+          if (msgs.length > 0) {
+            const last = msgs[msgs.length - 1] as Record<string, unknown>;
+            if (last?.role === "assistant" && typeof last.content === "string") {
+              addTranscript({
+                role: "assistant",
+                content: last.content,
+                ts: Date.now(),
+              });
+            }
+          }
+        }
+      });
+
+      instance.on("error", (e: unknown) => {
+        console.error("Vapi error:", e);
+        const message = extractError(e);
+        const isJoinError =
+          (e as { type?: string })?.type === "daily-call-join-error";
+        setCallStateAndReset("idle");
+        startingRef.current = false;
+        setError(isJoinError ? `${message} — check your connection and try again.` : message);
+        toast(message, "error");
+      });
+
+      instance.on("call-start", () => {
+        startingRef.current = false;
+        setCallStateAndReset("listening");
+        setElapsed(0);
+        timerRef.current = setInterval(() => {
+          setElapsed((prev) => prev + 1000);
+        }, 1000);
+      });
+
+      instance.on("call-end", () => {
+        setCallStateAndReset("idle");
+      });
+
+      instance.on("call-start-failed", (e: unknown) => {
+        console.error("Vapi call-start-failed:", e);
+        const message = extractError(e);
+        setCallStateAndReset("idle");
+        startingRef.current = false;
+        setError(`Could not connect to the call — ${message}`);
+      });
+
+      instance.on("speech-start", () => {
+        setCallState((prev) => (prev === "listening" ? "speaking" : prev));
+      });
+
+      instance.on("speech-end", () => {
+        setCallState((prev) => (prev === "speaking" ? "listening" : prev));
+      });
+
+      instance.on("local-volume-level", (vol: number) => {
+        setVolume(vol);
+      });
+    },
+    [addTranscript, extractError, setCallStateAndReset, toast]
+  );
+
+  const getVapi = useCallback(() => {
+    let instance = vapiRef.current;
+    if (!instance) {
+      instance = new Vapi(PUBLIC_KEY);
+      vapiRef.current = instance;
+      attachListeners(instance);
+    }
+    return instance;
+  }, [attachListeners]);
+
   const disposeVapi = useCallback(() => {
     const instance = vapiRef.current;
     if (instance) {
-      instance.removeAllListeners();
       void instance.stop().catch(() => {});
+      instance.removeAllListeners();
+      listenersAttachedRef.current = false;
       vapiRef.current = null;
     }
   }, []);
@@ -80,173 +235,87 @@ export default function CallPage() {
       return;
     }
     if (!me) return;
+    // Guard against double-start (e.g. rapid clicks or re-entrancy)
+    if (startingRef.current) return;
 
+    startingRef.current = true;
     setCallState("preparing");
     setError(null);
-
-    // Clean up any previous Vapi instance to prevent EventEmitter listener leaks
-    disposeVapi();
 
     // Fetch call config imperatively so a Convex server error doesn't crash the page
     let callConfig: PrepareResult | null = null;
     try {
       callConfig = await convex.query(api.webCall.prepare);
     } catch (e) {
+      startingRef.current = false;
       setCallState("idle");
       setError(e instanceof Error ? e.message : "Failed to load call configuration");
       return;
     }
 
     if (!callConfig || !callConfig.ok) {
+      startingRef.current = false;
       setCallState("idle");
       setError(callConfig?.reason ?? "Cannot start call");
       return;
     }
 
-    const instance = new Vapi(PUBLIC_KEY);
-    vapiRef.current = instance;
+    const instance = getVapi();
 
-    instance.on("message", (message: unknown) => {
-      const msg = message as Record<string, unknown>;
-      const type = typeof msg.type === "string" ? msg.type : "";
-
-      if (type === "transcript" && typeof msg.transcript === "string") {
-        const role = msg.role === "assistant" ? "assistant" : "user";
-        addTranscript({
-          role: role as "user" | "assistant",
-          content: msg.transcript,
-          ts: Date.now(),
-        });
-      }
-
-      if (type === "model-output" && typeof msg.modelOutput === "string") {
-        addTranscript({
-          role: "assistant",
-          content: msg.modelOutput,
-          ts: Date.now(),
-        });
-      }
-
-      if (type === "tool-calls-result" && typeof msg.result === "string") {
-        let resultText = msg.result;
-        try {
-          const parsed = JSON.parse(resultText);
-          if (parsed?.readback) {
-            resultText = parsed.readback;
-          }
-        } catch {
-          // keep raw result
-        }
-        addTranscript({
-          role: "assistant",
-          content: resultText,
-          ts: Date.now(),
-        });
-      }
-
-      if (
-        type === "conversation-update" &&
-        msg.conversation &&
-        typeof msg.conversation === "object"
-      ) {
-        const conv = msg.conversation as { messages?: unknown[] };
-        const msgs = conv.messages ?? [];
-        if (msgs.length > 0) {
-          const last = msgs[msgs.length - 1] as Record<string, unknown>;
-          if (last?.role === "assistant" && typeof last.content === "string") {
-            addTranscript({
-              role: "assistant",
-              content: last.content,
-              ts: Date.now(),
-            });
-          }
-        }
-      }
-    });
-
-    instance.on("error", (e: unknown) => {
-      console.error("Vapi error:", e);
-      const msg = (e as Record<string, unknown>)?.message;
-      toast(msg ? String(msg) : "A call error occurred", "error");
-    });
-
-    instance.on("call-start", () => {
-      setCallState("listening");
-      setElapsed(0);
-      timerRef.current = setInterval(() => {
-        setElapsed((prev) => prev + 250);
-      }, 250);
-    });
-
-    instance.on("call-end", () => {
-      setCallState("idle");
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-      setTranscript([]);
-    });
-
-    instance.on("speech-start", () => {
-      setCallState("speaking");
-    });
-
-    instance.on("speech-end", () => {
-      setCallState("listening");
-    });
-
-    instance.on("local-volume-level", (vol: number) => {
-      setVolume(vol);
-    });
+    // Show "Connecting…" immediately. `start()` only resolves once the call
+    // actually connects, so waiting to flip the state until after `await`
+    // leaves the user stuck on "Checking your account…" during long joins.
+    setCallState("connecting");
 
     try {
       await instance.start(callConfig.assistantId, {
         metadata: { authId: me!.authId },
       });
-      setCallState("connecting");
     } catch (e) {
+      startingRef.current = false;
       setCallState("idle");
-      setError(e instanceof Error ? e.message : "Failed to start call");
+      setError(
+        e instanceof Error
+          ? `Could not start the call — ${e.message}`
+          : "Failed to start call"
+      );
     }
-  }, [me, convex, disposeVapi, addTranscript, toast]);
+  }, [me, convex, getVapi]);
 
   const endCall = useCallback(async () => {
     const instance = vapiRef.current;
     if (!instance) return;
     setCallState("ending");
+    startingRef.current = false;
     try {
       await instance.stop();
     } catch (e) {
       console.error("Error stopping call:", e);
     }
-    instance.removeAllListeners();
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-    vapiRef.current = null;
-    setCallState("idle");
-    setTranscript([]);
-    setVolume(0);
-  }, []);
+    setCallStateAndReset("idle");
+  }, [setCallStateAndReset]);
 
   const toggleMute = useCallback(() => {
     const instance = vapiRef.current;
     if (!instance) return;
     const next = !muted;
     setMuted(next);
-    instance.setMuted(next);
+    try {
+      instance.setMuted(next);
+    } catch (e) {
+      // setMuted throws "Call object is not available" if the call already
+      // ended/errored — keep the UI consistent without crashing.
+      console.warn("Mute toggle ignored (no active call):", e);
+      setMuted(!next);
+    }
   }, [muted]);
 
   useEffect(() => {
     return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
+      stopTimer();
       disposeVapi();
     };
-  }, [disposeVapi]);
+  }, [stopTimer, disposeVapi]);
 
   const isReady = authStatus?.status === "authenticated" && authStatus.emailVerified;
   const active = callState !== "idle" && callState !== "preparing";
