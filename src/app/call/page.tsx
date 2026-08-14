@@ -11,6 +11,10 @@ import MedicalDisclaimer from "@/components/medical-disclaimer";
 import Vapi from "@vapi-ai/web";
 
 const PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY ?? "";
+// Optional override for the Vapi API base URL (defaults to https://api.vapi.ai
+// inside the SDK). Useful when requests to api.vapi.ai are blocked/unresolvable
+// in a given network and must be routed through a proxy.
+const API_BASE_URL = process.env.NEXT_PUBLIC_VAPI_API_BASE_URL || undefined;
 
 type CallState =
   | "idle"
@@ -91,13 +95,46 @@ export default function CallPage() {
     const err = e as {
       type?: string;
       message?: string;
-      error?: { message?: string; error?: string };
+      error?: { message?: string; error?: string } | string;
     };
+    if (typeof err?.error === "string") return err.error;
     if (err?.error?.message) return err.error.message;
     if (err?.error?.error) return err.error.error;
-    if (err?.message) return err.message;
+    if (typeof err?.message === "string") return err.message;
     return "A call error occurred";
   }, []);
+
+  // Turn a raw Vapi error into something actionable for the user. A
+  // "Failed to fetch" / DNS failure means we couldn't reach api.vapi.ai at all
+  // (network, DNS, firewall, or a browser extension/privacy blocker), not a
+  // problem with the call itself.
+  const describeFailure = useCallback(
+    (message: string, type?: string): string => {
+      const isNetwork =
+        /failed to fetch|name not resolved|networkerror|net::|timeout/i.test(
+          message
+        ) ||
+        type === "start-method-error" ||
+        type === "daily-call-join-error";
+      if (isNetwork) {
+        return `Can't reach Vapi's servers (${message}). Check your internet connection, DNS, firewall, or any browser extension/privacy blocker intercepting api.vapi.ai.`;
+      }
+      return message;
+    },
+    []
+  );
+
+  const reportFailure = useCallback(
+    (e: unknown) => {
+      const ev = e as { type?: string; error?: unknown };
+      const message = extractError(e);
+      setCallStateAndReset("idle");
+      startingRef.current = false;
+      setError(describeFailure(message, ev?.type));
+      toast(message, "error");
+    },
+    [extractError, describeFailure, setCallStateAndReset, toast]
+  );
 
   const attachListeners = useCallback(
     (instance: Vapi) => {
@@ -164,13 +201,7 @@ export default function CallPage() {
 
       instance.on("error", (e: unknown) => {
         console.error("Vapi error:", e);
-        const message = extractError(e);
-        const isJoinError =
-          (e as { type?: string })?.type === "daily-call-join-error";
-        setCallStateAndReset("idle");
-        startingRef.current = false;
-        setError(isJoinError ? `${message} — check your connection and try again.` : message);
-        toast(message, "error");
+        reportFailure(e);
       });
 
       instance.on("call-start", () => {
@@ -188,10 +219,7 @@ export default function CallPage() {
 
       instance.on("call-start-failed", (e: unknown) => {
         console.error("Vapi call-start-failed:", e);
-        const message = extractError(e);
-        setCallStateAndReset("idle");
-        startingRef.current = false;
-        setError(`Could not connect to the call — ${message}`);
+        reportFailure(e);
       });
 
       instance.on("speech-start", () => {
@@ -206,13 +234,13 @@ export default function CallPage() {
         setVolume(vol);
       });
     },
-    [addTranscript, extractError, setCallStateAndReset, toast]
+    [addTranscript, reportFailure, setCallStateAndReset]
   );
 
   const getVapi = useCallback(() => {
     let instance = vapiRef.current;
     if (!instance) {
-      instance = new Vapi(PUBLIC_KEY);
+      instance = new Vapi(PUBLIC_KEY, API_BASE_URL);
       vapiRef.current = instance;
       attachListeners(instance);
     }
