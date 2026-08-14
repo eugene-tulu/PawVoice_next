@@ -72,6 +72,12 @@ export function SiteNav() {
                 Dashboard
               </Link>
               <Link
+                href="/call"
+                className="hidden px-3 py-1.5 text-sm font-medium text-ink-2 transition-colors hover:text-ink sm:block"
+              >
+                Call
+              </Link>
+              <Link
                 href="/settings"
                 className="hidden px-3 py-1.5 text-sm font-medium text-ink-2 transition-colors hover:text-ink sm:block"
               >

@@ -59,8 +59,10 @@ export default function Dashboard() {
     }
   };
 
-  const loading = me === undefined || pets === undefined;
-  if (loading) {
+  // Only block on the user record. The "Voice call" CTA and account summary
+  // must stay visible even while the pets list is still loading, otherwise the
+  // link to /call can appear "invisible" (the whole dashboard body is gated).
+  if (me === undefined) {
     return (
       <div className="min-h-screen bg-paper flex items-center justify-center">
         <div className="text-center">
@@ -154,7 +156,7 @@ export default function Dashboard() {
             )}
             <Link
               href="/call"
-              className="inline-block px-4 py-2 bg-accent text-paper rounded-lg font-medium hover:bg-ink hover:text-paper transition-colors"
+              className="btn btn-primary !rounded-lg"
             >
               Start web call
             </Link>
