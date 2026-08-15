@@ -23,8 +23,10 @@ interface VapiCall {
 
 interface VapiToolCall {
   id?: string;
+  // Vapi may key the call by `toolCallId` instead of `id` in some payloads.
+  toolCallId?: string;
   name?: string;
-  // `arguments` is sometimes a JSON *string* (OpenAI-style) rather than an object.
+  // `arguments` is sometimes a JSON string (OpenAI-style) rather than an object.
   parameters?: Record<string, unknown>;
   arguments?: unknown;
   function?: {
@@ -261,6 +263,36 @@ export const vapiWebhook = httpAction(async (ctx, request) => {
           message.toolWithToolCallList ??
           []),
       ];
+
+      // Vapi may include the same tool call in BOTH `toolCallList` and
+      // `toolWithToolCallList`. De-duplicate by id, preferring the copy that
+      // actually carries arguments (the two copies nest them differently), so we
+      // run the tool exactly once and don't double-log or 500 on a copy that
+      // lacks args.
+      const seen = new Set<string>();
+      const toolCalls: VapiToolCall[] = [];
+      const hasArgs = (tc: VapiToolCall) =>
+        !!(tc?.arguments || tc?.parameters || tc?.function?.arguments ||
+          tc?.function?.parameters || tc?.toolCall?.function?.arguments ||
+          tc?.toolCall?.function?.parameters);
+      for (const raw of rawToolCalls) {
+        const tc = raw as VapiToolCall;
+        const id = tc?.id ?? tc?.toolCallId ?? tc?.toolCall?.id ?? "";
+        if (!id) {
+          toolCalls.push(tc);
+          continue;
+        }
+        const existingIdx = toolCalls.findIndex(
+          (u) => (u?.id ?? u?.toolCallId ?? u?.toolCall?.id ?? "") === id
+        );
+        if (existingIdx === -1) {
+          seen.add(id);
+          toolCalls.push(tc);
+        } else if (!hasArgs(toolCalls[existingIdx]!) && hasArgs(tc)) {
+          toolCalls[existingIdx] = tc;
+        }
+      }
+
       // Diagnostic: surface whether Vapi delivers the caller identity and tool
       // calls on web calls. For web calls `assistant-request` never fires, so the
       // only way to attribute a log is via metadata.authId here. Log the envelope
@@ -273,12 +305,26 @@ export const vapiWebhook = httpAction(async (ctx, request) => {
           authId,
           messageKeys: Object.keys(message?.message ?? {}),
           callKeys: Object.keys((message?.message?.call ?? message?.call) ?? {}),
-          toolCount: rawToolCalls.length,
-          toolNames: rawToolCalls.map((t) =>
-            readToolName(t as VapiToolCall)
-          ),
+          rawCount: rawToolCalls.length,
+          uniqueCount: toolCalls.length,
+          tools: toolCalls.map((tc) => ({
+            id: tc?.id ?? tc?.toolCallId ?? tc?.toolCall?.id ?? null,
+            name: readToolName(tc),
+            topKeys: Object.keys(tc ?? {}),
+            argLocations: {
+              arguments: typeof tc?.arguments,
+              parameters: typeof tc?.parameters,
+              functionArguments: typeof tc?.function?.arguments,
+              functionParameters: typeof tc?.function?.parameters,
+              toolCallFunctionArguments:
+                typeof tc?.toolCall?.function?.arguments,
+              toolCallFunctionParameters:
+                typeof tc?.toolCall?.function?.parameters,
+            },
+          })),
         })
       );
+
       const callerPhone = customerNumber
         ? normalizePhone(customerNumber)
         : null;
@@ -296,42 +342,52 @@ export const vapiWebhook = httpAction(async (ctx, request) => {
 
       // Vapi delivers tool calls in either `toolCallList` (flattened) or
       // `toolWithToolCallList` (with the original tool config), and nests the
-      // name/arguments in several shapes. `rawToolCalls` already merges both
-      // arrays above; iterate it here.
+      // name/arguments in several shapes. `toolCalls` is the de-duplicated list.
       const results: { toolCallId: string; name: string; result: string }[] = [];
 
-      for (const raw of rawToolCalls) {
-        const toolCall = raw as VapiToolCall;
-        const id = toolCall?.id ?? toolCall?.toolCall?.id ?? "";
+      for (const toolCall of toolCalls) {
+        const id =
+          toolCall?.id ?? toolCall?.toolCallId ?? toolCall?.toolCall?.id ?? "";
         // Normalize case: the registered tool is "logActivity" but Vapi's
         // dashboard/strip may capitalize it ("LogActivity").
         const name = readToolName(toolCall).toLowerCase();
         const params = readParams(toolCall);
 
         let outcome: unknown;
-        if (name === "logactivity") {
-          outcome = await ctx.runMutation(internal.logs.logActivity, {
-            ...params,
-            callId,
-            callerPhone: resolvedPhone ?? undefined,
-            authId: resolvedAuthId ?? undefined,
-          } as {
-            pet: string;
-            activity_type: string;
-            duration?: string;
-            verbatim_notes?: string;
-            callId: string;
-            callerPhone?: string;
-            authId?: string;
-          });
-        } else if (name === "undolastentry") {
-          outcome = await ctx.runMutation(internal.logs.undoLastEntry, {
-            callId,
-            callerPhone: resolvedPhone ?? undefined,
-            authId: resolvedAuthId ?? undefined,
-          });
-        } else {
-          outcome = { ok: false, readback: `Unknown tool ${name}` };
+        try {
+          if (name === "logactivity") {
+            outcome = await ctx.runMutation(internal.logs.logActivity, {
+              ...params,
+              callId,
+              callerPhone: resolvedPhone ?? undefined,
+              authId: resolvedAuthId ?? undefined,
+            } as {
+              pet: string;
+              activity_type: string;
+              duration?: string;
+              verbatim_notes?: string;
+              callId: string;
+              callerPhone?: string;
+              authId?: string;
+            });
+          } else if (name === "undolastentry") {
+            outcome = await ctx.runMutation(internal.logs.undoLastEntry, {
+              callId,
+              callerPhone: resolvedPhone ?? undefined,
+              authId: resolvedAuthId ?? undefined,
+            });
+          } else {
+            outcome = { ok: false, readback: `Unknown tool ${name}` };
+          }
+        } catch (e) {
+          // Never let a throw abort the whole webhook (which would make Vapi
+          // report "No result returned"). Return a graceful, relayable error.
+          console.error("vapi tool-calls handler error:", e);
+          outcome = {
+            ok: false,
+            readback:
+              "Sorry, something went wrong while saving that. Please try again.",
+          };
         }
 
         // Vapi feeds `result` back to the LLM. We return a concise string so the
