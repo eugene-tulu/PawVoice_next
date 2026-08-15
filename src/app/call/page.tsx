@@ -154,7 +154,7 @@ export default function CallPage() {
           message
         );
       if (isMicAudio) {
-        return "The call connected but we didn't receive any microphone audio, so it ended. Check that your mic is unmuted and the right input device is selected, that no other app is using it, and that this site is allowed to use the microphone — then try again.";
+        return "The call ended because no microphone audio was detected. On web calls the assistant speaks after you do, so start talking when the call connects (and make sure your mic is unmuted, the right input device is selected, no other app is using it, and this site is allowed microphone access).";
       }
       const isNetwork =
         /failed to fetch|name not resolved|networkerror|net::|timeout/i.test(
@@ -408,8 +408,14 @@ export default function CallPage() {
       await instance.start(callConfig.assistantId, {
         metadata: { authId: me!.authId },
         // Inject the user's pet list into the assistant prompt so it logs for
-        // the correct pet without having to ask.
-        variableValues: { pets: callConfig.petContext ?? "" },
+        // the correct pet without having to ask. Also pass authId via
+        // variableValues: for web calls Vapi echoes variableValues back to the
+        // tool-calls webhook (but does NOT forward metadata.authId), so this is
+        // how the webhook attributes each logged activity to the right user.
+        variableValues: {
+          pets: callConfig.petContext ?? "",
+          authId: me!.authId,
+        },
       });
     } catch (e) {
       startingRef.current = false;

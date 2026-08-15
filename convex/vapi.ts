@@ -16,6 +16,7 @@ interface VapiCall {
   phoneNumber?: { number?: string };
   metadata?: Record<string, unknown>;
   assistant?: { metadata?: Record<string, unknown> };
+  assistantOverrides?: { variableValues?: Record<string, unknown> };
   endedAt?: string | number;
   durationSeconds?: number;
 }
@@ -39,6 +40,7 @@ interface VapiMessage {
   callId?: string;
   customer?: { number?: string };
   assistant?: { metadata?: Record<string, unknown> };
+  assistantOverrides?: { variableValues?: Record<string, unknown> };
   metadata?: Record<string, unknown>;
   toolCallList?: VapiToolCall[];
 }
@@ -49,6 +51,7 @@ interface VapiEnvelope {
   callId?: string;
   customer?: { number?: string };
   metadata?: Record<string, unknown>;
+  assistantOverrides?: { variableValues?: Record<string, unknown> };
   toolCallList?: VapiToolCall[];
   type?: string;
 }
@@ -79,13 +82,19 @@ function extractCall(message: VapiEnvelope): { id: string; customerNumber: strin
     message.customer?.number ??
     call?.phoneNumber?.number ??
     null;
-  // Web calls: authId is set via the web SDK start() options and must reach
-  // the `tool-calls` handler so we can attribute the log to the right user.
-  // For web calls the `assistant-request` event (which would create a
-  // callSession) never fires, so tool-calls can ONLY be resolved via this
-  // metadata. Vapi nests it in different spots depending on the transport,
-  // so check every known location.
+  // Web calls: the user identity must reach the `tool-calls` handler so we can
+  // attribute each logged activity to the right user. For web calls the
+  // `assistant-request` event (which would create a callSession) never fires,
+  // and Vapi does NOT forward `metadata.authId` to the tool-calls webhook.
+  // It DOES echo `assistantOverrides.variableValues` back, so the frontend
+  // passes authId there — read it from every known location as a fallback.
+  const variableValues =
+    call?.assistantOverrides?.variableValues ??
+    inner?.assistantOverrides?.variableValues ??
+    message?.assistantOverrides?.variableValues ??
+    {};
   const authIdCandidates: unknown[] = [
+    variableValues?.authId,
     call?.metadata?.authId,
     inner?.metadata?.authId,
     message?.metadata?.authId,
