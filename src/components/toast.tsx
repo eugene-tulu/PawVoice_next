@@ -6,6 +6,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { toText } from "@/lib/text";
 
 type Tone = "success" | "error" | "info";
 
@@ -24,7 +25,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const push = useCallback<ToastFn>((message, tone = "info") => {
     const id = Date.now() + Math.random();
-    setToasts((prev) => [...prev, { id, message, tone }]);
+    // Defensive: callers are typed to pass a string, but error objects
+    // sometimes leak through at runtime. Rendering a non-string as a React
+    // child throws (React error #31), so coerce via the shared helper.
+    setToasts((prev) => [...prev, { id, message: toText(message), tone }]);
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 4000);

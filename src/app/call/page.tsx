@@ -8,6 +8,9 @@ import { useRouter } from "next/navigation";
 import { SiteNav } from "@/components/site-nav";
 import { useToast } from "@/components/toast";
 import MedicalDisclaimer from "@/components/medical-disclaimer";
+// Coerce any value to a renderable string. Vapi message/error payloads can nest
+// objects, and rendering an object as JSX children throws React error #31.
+import { toText } from "@/lib/text";
 import Vapi from "@vapi-ai/web";
 import { track } from "@vercel/analytics";
 
@@ -36,19 +39,6 @@ function formatDuration(ms: number): string {
   const m = Math.floor(s / 60);
   const r = s % 60;
   return `${m}:${r.toString().padStart(2, "0")}`;
-}
-
-// Coerce any transcript content to a renderable string. Vapi message payloads
-// can nest objects (e.g. a tool-call readback), and rendering an object as JSX
-// children throws React error #31 and crashes the page.
-function toText(value: unknown): string {
-  if (typeof value === "string") return value;
-  if (value === null || value === undefined) return "";
-  try {
-    return JSON.stringify(value);
-  } catch {
-    return String(value);
-  }
 }
 
 export default function CallPage() {
@@ -111,15 +101,40 @@ export default function CallPage() {
   );
 
   const extractError = useCallback((e: unknown): string => {
-    const err = e as {
-      type?: string;
-      message?: string;
-      error?: { message?: string; error?: string } | string;
-    };
-    if (typeof err?.error === "string") return err.error;
-    if (err?.error?.message) return err.error.message;
-    if (err?.error?.error) return err.error.error;
-    if (typeof err?.message === "string") return err.message;
+    // Vapi/Daily error payloads are deeply nested and inconsistent: the useful
+    // text can live on .error (string), .error.message, .error.msg/.errorMsg
+    // (Daily), or the top-level .message. CRITICALLY, the Vapi SDK's
+    // `serializeError` can set `.error.message` to an *object* — Daily's
+    // {type, msg, details} — when a meeting ends in error. Returning that
+    // object here (as the old code did) gets rendered as a React child and
+    // crashes the page (React error #31). So we coerce every candidate to a
+    // string and never return a non-string.
+    if (typeof e === "string") return e;
+    const err = (e ?? {}) as Record<string, unknown>;
+    const inner = (err.error && typeof err.error === "object"
+      ? (err.error as Record<string, unknown>)
+      : {}) as Record<string, unknown>;
+
+    const candidates: unknown[] = [
+      err.error,
+      inner.message,
+      inner.msg,
+      inner.errorMsg,
+      inner.error,
+      err.errorMsg,
+      err.msg,
+      err.message,
+    ];
+    for (const c of candidates) {
+      if (typeof c === "string" && c.trim()) return c;
+    }
+    // Nothing was a plain string. Don't dump the whole serialized error into
+    // the UI: the Vapi SDK attaches `stack`, `details`, `cause` etc., which is
+    // noise for the user and leaks internals. The raw object is already logged
+    // by the `error`/`call-start-failed` handlers for debugging, so fall back
+    // to a short, safe label here.
+    if (typeof inner.name === "string" && inner.name.trim()) return inner.name;
+    if (typeof err.type === "string" && err.type.trim()) return err.type;
     return "A call error occurred";
   }, []);
 
@@ -129,6 +144,18 @@ export default function CallPage() {
   // problem with the call itself.
   const describeFailure = useCallback(
     (message: string, type?: string): string => {
+      // The most common real failure: the meeting connects but Vapi receives
+      // no microphone audio and ends the call immediately (endedReason
+      // "call.in-progress.error-assistant-did-not-receive-customer-audio",
+      // surfaced to the browser as "Meeting has ended"). This is a mic
+      // capture/permission problem, not a network one.
+      const isMicAudio =
+        /did not receive customer audio|customer audio|meeting has ended|meeting ended|no audio|microphone/i.test(
+          message
+        );
+      if (isMicAudio) {
+        return "The call connected but we didn't receive any microphone audio, so it ended. Check that your mic is unmuted and the right input device is selected, that no other app is using it, and that this site is allowed to use the microphone — then try again.";
+      }
       const isNetwork =
         /failed to fetch|name not resolved|networkerror|net::|timeout/i.test(
           message
@@ -314,12 +341,68 @@ export default function CallPage() {
       return;
     }
 
-    const instance = getVapi();
-
-    // Show "Connecting…" immediately. `start()` only resolves once the call
-    // actually connects, so waiting to flip the state until after `await`
-    // leaves the user stuck on "Checking your account…" during long joins.
+    // Preflight: confirm we can actually capture microphone audio *before*
+    // joining the meeting. If we skip this, a blocked/broken/absent mic makes
+    // the Vapi (Daily) client join with no audio track, and Vapi ends the call
+    // server-side within a second — surfaced to the browser only as the opaque
+    // "Meeting has ended" (endedReason:
+    // "call.in-progress.error-assistant-did-not-receive-customer-audio").
+    // Doing the check here lets us fail fast with an actionable message and
+    // warms up the permission grant so the SDK's own join succeeds.
     setCallState("connecting");
+    try {
+      if (
+        typeof navigator === "undefined" ||
+        !navigator.mediaDevices ||
+        typeof navigator.mediaDevices.getUserMedia !== "function"
+      ) {
+        // getUserMedia is unavailable outside a secure context (non-HTTPS).
+        const err = new Error("insecure-context");
+        err.name = "insecure-context";
+        throw err;
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const hasLiveAudio = stream
+        .getAudioTracks()
+        .some((t) => t.readyState === "live" && t.enabled);
+      // Release the device immediately so the Vapi/Daily SDK can re-acquire it.
+      stream.getTracks().forEach((t) => t.stop());
+      if (!hasLiveAudio) {
+        const err = new Error("no-audio-track");
+        err.name = "NotFoundError";
+        throw err;
+      }
+    } catch (e) {
+      startingRef.current = false;
+      setCallState("idle");
+      const name = (e as { name?: string })?.name ?? "";
+      let friendly =
+        "We couldn't access your microphone. Allow mic access and try again.";
+      if (name === "insecure-context") {
+        friendly =
+          "Microphone access requires a secure (HTTPS) connection. Open the app over HTTPS and try again.";
+      } else if (name === "NotAllowedError" || name === "SecurityError") {
+        friendly =
+          "Microphone permission is blocked. Allow this site to use your microphone in your browser's site settings, then reload and try again.";
+      } else if (name === "NotReadableError" || name === "AbortError") {
+        friendly =
+          "Your microphone is unavailable — it may be in use by another app. Close the other app, then try again.";
+      } else if (name === "NotFoundError" || name === "OverconstrainedError") {
+        friendly =
+          "No working microphone was found. Connect a mic and select it as your input device, then try again.";
+      }
+      setError(friendly);
+      return;
+    }
+
+    // The user may have hit "End call" while the mic prompt was open, which
+    // clears the start guard. Honour that cancellation before joining.
+    if (!startingRef.current) {
+      setCallStateAndReset("idle");
+      return;
+    }
+
+    const instance = getVapi();
 
     try {
       await instance.start(callConfig.assistantId, {
@@ -337,11 +420,21 @@ export default function CallPage() {
           : "Failed to start call"
       );
     }
-  }, [me, convex, getVapi]);
+  }, [me, convex, getVapi, setCallStateAndReset]);
 
   const endCall = useCallback(async () => {
     const instance = vapiRef.current;
-    if (!instance) return;
+    if (!instance) {
+      // No SDK instance yet, so the user hit "End call" while the start was
+      // still in flight (e.g. the mic permission prompt was open). Clear the
+      // start guard so `startCall` aborts before joining, instead of silently
+      // doing nothing and then connecting anyway.
+      if (startingRef.current) {
+        startingRef.current = false;
+        setCallStateAndReset("idle");
+      }
+      return;
+    }
     setCallState("ending");
     startingRef.current = false;
     try {
