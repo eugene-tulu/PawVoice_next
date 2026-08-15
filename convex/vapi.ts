@@ -24,13 +24,23 @@ interface VapiCall {
 interface VapiToolCall {
   id?: string;
   name?: string;
+  // `arguments` is sometimes a JSON *string* (OpenAI-style) rather than an object.
   parameters?: Record<string, unknown>;
-  arguments?: Record<string, unknown>;
+  arguments?: unknown;
+  function?: {
+    name?: string;
+    parameters?: Record<string, unknown>;
+    arguments?: unknown;
+  };
   toolCall?: {
     id?: string;
-    function?: { name?: string };
+    function?: {
+      name?: string;
+      parameters?: Record<string, unknown>;
+      arguments?: unknown;
+    };
     parameters?: Record<string, unknown>;
-    arguments?: Record<string, unknown>;
+    arguments?: unknown;
   };
 }
 
@@ -43,6 +53,7 @@ interface VapiMessage {
   assistantOverrides?: { variableValues?: Record<string, unknown> };
   metadata?: Record<string, unknown>;
   toolCallList?: VapiToolCall[];
+  toolWithToolCallList?: VapiToolCall[];
 }
 
 interface VapiEnvelope {
@@ -53,6 +64,7 @@ interface VapiEnvelope {
   metadata?: Record<string, unknown>;
   assistantOverrides?: { variableValues?: Record<string, unknown> };
   toolCallList?: VapiToolCall[];
+  toolWithToolCallList?: VapiToolCall[];
   type?: string;
 }
 
@@ -111,16 +123,44 @@ function extractCall(message: VapiEnvelope): { id: string; customerNumber: strin
   };
 }
 
+// Vapi nests the tool name in several shapes across API versions:
+// top-level `name`, `function.name`, or `toolCall.function.name`.
+function readToolName(toolCall: VapiToolCall): string {
+  const candidates: unknown[] = [
+    toolCall?.name,
+    toolCall?.function?.name,
+    toolCall?.toolCall?.function?.name,
+  ];
+  const found = candidates.find(
+    (n): n is string => typeof n === "string" && n.length > 0
+  );
+  return found ?? "unknown";
+}
+
 function readParams(toolCall: VapiToolCall): Record<string, unknown> {
-  // Vapi may deliver the function arguments under `parameters` or `arguments`
-  // depending on the transport/model; handle both so the tool never receives
-  // an empty object (which would silently log nothing).
-  const p =
+  // Vapi may deliver the function arguments under `parameters` or `arguments`,
+  // nested under `function` or `toolCall`, depending on the transport/model.
+  // `arguments` can also arrive as a JSON *string* (OpenAI-style) rather than an
+  // object, so parse it when needed. Handle all shapes so the tool never
+  // receives an empty object (which would silently log nothing).
+  const raw =
     toolCall?.parameters ??
     toolCall?.arguments ??
+    toolCall?.function?.arguments ??
+    toolCall?.function?.parameters ??
     toolCall?.toolCall?.parameters ??
-    toolCall?.toolCall?.arguments;
-  return (p ?? {}) as Record<string, unknown>;
+    toolCall?.toolCall?.arguments ??
+    toolCall?.toolCall?.function?.arguments ??
+    toolCall?.toolCall?.function?.parameters;
+  if (!raw) return {};
+  if (typeof raw === "string") {
+    try {
+      return (JSON.parse(raw) ?? {}) as Record<string, unknown>;
+    } catch {
+      return {};
+    }
+  }
+  return raw as Record<string, unknown>;
 }
 
 function extractEndedAt(message: VapiEnvelope): number | undefined {
@@ -215,10 +255,16 @@ export const vapiWebhook = httpAction(async (ctx, request) => {
     }
 
     case "tool-calls": {
-      // Diagnostic: surface whether Vapi delivers the caller identity on web
-      // calls. For web calls `assistant-request` never fires, so the only way
-      // to attribute a log is via metadata.authId here. Log the envelope so a
-      // resolution failure can be traced without guessing.
+      const rawToolCalls: unknown[] = [
+        ...(message.message?.toolCallList ?? message.toolCallList ?? []),
+        ...(message.message?.toolWithToolCallList ??
+          message.toolWithToolCallList ??
+          []),
+      ];
+      // Diagnostic: surface whether Vapi delivers the caller identity and tool
+      // calls on web calls. For web calls `assistant-request` never fires, so the
+      // only way to attribute a log is via metadata.authId here. Log the envelope
+      // so a resolution failure can be traced without guessing.
       console.log(
         "vapi tool-calls:",
         JSON.stringify({
@@ -227,6 +273,10 @@ export const vapiWebhook = httpAction(async (ctx, request) => {
           authId,
           messageKeys: Object.keys(message?.message ?? {}),
           callKeys: Object.keys((message?.message?.call ?? message?.call) ?? {}),
+          toolCount: rawToolCalls.length,
+          toolNames: rawToolCalls.map((t) =>
+            readToolName(t as VapiToolCall)
+          ),
         })
       );
       const callerPhone = customerNumber
@@ -244,17 +294,22 @@ export const vapiWebhook = httpAction(async (ctx, request) => {
         resolvedAuthId = resolvedAuthId ?? session?.authId ?? undefined;
       }
 
-      const toolCallList: VapiToolCall[] =
-        message.message?.toolCallList ?? message.toolCallList ?? [];
+      // Vapi delivers tool calls in either `toolCallList` (flattened) or
+      // `toolWithToolCallList` (with the original tool config), and nests the
+      // name/arguments in several shapes. `rawToolCalls` already merges both
+      // arrays above; iterate it here.
       const results: { toolCallId: string; name: string; result: string }[] = [];
 
-      for (const toolCall of toolCallList) {
+      for (const raw of rawToolCalls) {
+        const toolCall = raw as VapiToolCall;
         const id = toolCall?.id ?? toolCall?.toolCall?.id ?? "";
-        const name: string = toolCall?.name ?? toolCall?.toolCall?.function?.name ?? "unknown";
+        // Normalize case: the registered tool is "logActivity" but Vapi's
+        // dashboard/strip may capitalize it ("LogActivity").
+        const name = readToolName(toolCall).toLowerCase();
         const params = readParams(toolCall);
 
         let outcome: unknown;
-        if (name === "logActivity") {
+        if (name === "logactivity") {
           outcome = await ctx.runMutation(internal.logs.logActivity, {
             ...params,
             callId,
@@ -269,7 +324,7 @@ export const vapiWebhook = httpAction(async (ctx, request) => {
             callerPhone?: string;
             authId?: string;
           });
-        } else if (name === "undoLastEntry") {
+        } else if (name === "undolastentry") {
           outcome = await ctx.runMutation(internal.logs.undoLastEntry, {
             callId,
             callerPhone: resolvedPhone ?? undefined,
