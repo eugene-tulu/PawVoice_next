@@ -429,7 +429,7 @@ export default function CallPage() {
 
         {error && (
           <div className="border border-red-500/30 bg-red-50/30 rounded-lg p-4 mb-4">
-            <p className="text-sm text-red-600">{error}</p>
+            <p className="text-sm text-red-600">{toText(error)}</p>
           </div>
         )}
 
