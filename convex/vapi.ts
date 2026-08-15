@@ -91,8 +91,6 @@ function extractCall(message: VapiEnvelope): { id: string; customerNumber: strin
     message?.metadata?.authId,
     inner?.assistant?.metadata?.authId,
     message?.message?.assistant?.metadata?.authId,
-    // Some tool-calls payloads wrap the live call under a different key.
-    (call as Record<string, unknown>)?.assistant?.metadata?.authId,
   ];
   const authId = authIdCandidates.find(
     (v): v is string => typeof v === "string" && v.length > 0
