@@ -15,6 +15,7 @@ interface VapiCall {
   customer?: { number?: string };
   phoneNumber?: { number?: string };
   metadata?: Record<string, unknown>;
+  assistant?: { metadata?: Record<string, unknown> };
   endedAt?: string | number;
   durationSeconds?: number;
 }
@@ -28,21 +29,26 @@ interface VapiToolCall {
     id?: string;
     function?: { name?: string };
     parameters?: Record<string, unknown>;
+    arguments?: Record<string, unknown>;
   };
 }
 
-interface VapiEnvelope {
-  message?: {
-    type?: string;
-    call?: VapiCall;
-    callId?: string;
-    customer?: { number?: string };
-    assistant?: { metadata?: Record<string, unknown> };
-    toolCallList?: VapiToolCall[];
-  };
+interface VapiMessage {
+  type?: string;
   call?: VapiCall;
   callId?: string;
   customer?: { number?: string };
+  assistant?: { metadata?: Record<string, unknown> };
+  metadata?: Record<string, unknown>;
+  toolCallList?: VapiToolCall[];
+}
+
+interface VapiEnvelope {
+  message?: VapiMessage;
+  call?: VapiCall;
+  callId?: string;
+  customer?: { number?: string };
+  metadata?: Record<string, unknown>;
   toolCallList?: VapiToolCall[];
   type?: string;
 }
@@ -73,23 +79,41 @@ function extractCall(message: VapiEnvelope): { id: string; customerNumber: strin
     message.customer?.number ??
     call?.phoneNumber?.number ??
     null;
-  // Web calls: authId is set via the web SDK start() options. Depending on how
-  // Vapi surfaces it, it can land in call.metadata OR the assistant overrides
-  // metadata — check both so the user is always resolved for tool-calls.
-  const authId =
-    call?.metadata?.authId ??
-    inner?.assistant?.metadata?.authId ??
-    message?.message?.assistant?.metadata?.authId ??
-    null;
+  // Web calls: authId is set via the web SDK start() options and must reach
+  // the `tool-calls` handler so we can attribute the log to the right user.
+  // For web calls the `assistant-request` event (which would create a
+  // callSession) never fires, so tool-calls can ONLY be resolved via this
+  // metadata. Vapi nests it in different spots depending on the transport,
+  // so check every known location.
+  const authIdCandidates: unknown[] = [
+    call?.metadata?.authId,
+    inner?.metadata?.authId,
+    message?.metadata?.authId,
+    inner?.assistant?.metadata?.authId,
+    message?.message?.assistant?.metadata?.authId,
+    // Some tool-calls payloads wrap the live call under a different key.
+    (call as Record<string, unknown>)?.assistant?.metadata?.authId,
+  ];
+  const authId = authIdCandidates.find(
+    (v): v is string => typeof v === "string" && v.length > 0
+  );
   return {
     id: call?.id ?? inner?.callId ?? message.callId ?? "",
     customerNumber: number,
-    authId: typeof authId === "string" ? authId : null,
+    authId: authId ?? null,
   };
 }
 
 function readParams(toolCall: VapiToolCall): Record<string, unknown> {
-  return toolCall?.parameters ?? toolCall?.arguments ?? toolCall?.toolCall?.parameters ?? {};
+  // Vapi may deliver the function arguments under `parameters` or `arguments`
+  // depending on the transport/model; handle both so the tool never receives
+  // an empty object (which would silently log nothing).
+  const p =
+    toolCall?.parameters ??
+    toolCall?.arguments ??
+    toolCall?.toolCall?.parameters ??
+    toolCall?.toolCall?.arguments;
+  return (p ?? {}) as Record<string, unknown>;
 }
 
 function extractEndedAt(message: VapiEnvelope): number | undefined {
@@ -184,6 +208,20 @@ export const vapiWebhook = httpAction(async (ctx, request) => {
     }
 
     case "tool-calls": {
+      // Diagnostic: surface whether Vapi delivers the caller identity on web
+      // calls. For web calls `assistant-request` never fires, so the only way
+      // to attribute a log is via metadata.authId here. Log the envelope so a
+      // resolution failure can be traced without guessing.
+      console.log(
+        "vapi tool-calls:",
+        JSON.stringify({
+          callId,
+          customerNumber,
+          authId,
+          messageKeys: Object.keys(message?.message ?? {}),
+          callKeys: Object.keys((message?.message?.call ?? message?.call) ?? {}),
+        })
+      );
       const callerPhone = customerNumber
         ? normalizePhone(customerNumber)
         : null;
