@@ -44,7 +44,6 @@ export const billingPortal = action({
     }
     const portal_url = await creemCustomerPortalUrl({
       customerId: user.dodoCustomerId,
-      returnUrl: appUrl("/dashboard?billing=portal"),
     });
     return { portal_url };
   },

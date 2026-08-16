@@ -405,9 +405,21 @@ export const vapiWebhook = httpAction(async (ctx, request) => {
     case "end-of-call-report": {
       const endedAt = extractEndedAt(message);
       const durationSec = extractDurationSec(message);
+      // `callId`, `customerNumber`, and `authId` are extracted at the top of
+      // this handler. Web calls carry identity only via `authId` (no phone),
+      // so forward both so recordBilling can attribute the call when no
+      // assistant-request session exists.
+      console.log(
+        "vapi end-of-call-report:",
+        JSON.stringify({ callId, customerNumber, authId, durationSec })
+      );
       await ctx.runAction(internal.billing.recordBilling, {
         callId,
         endedAt,
+        callerPhone: customerNumber
+          ? normalizePhone(customerNumber) ?? undefined
+          : undefined,
+        authId: authId ?? undefined,
         ...(durationSec !== undefined ? { durationSec } : {}),
       });
       return new Response("ok", { status: 200 });

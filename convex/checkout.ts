@@ -86,12 +86,13 @@ export async function creemCheckoutUrl(opts: {
 
 export async function creemCustomerPortalUrl(opts: {
   customerId: string;
-  returnUrl?: string;
 }): Promise<string> {
+  // Creem's POST /v1/customers/billing accepts only `customer_id` (optionally
+  // `product_id` to prefill an upgrade). It does NOT accept `return_url`, and
+  // sending one yields HTTP 400 ("property return_url should not exist").
   const payload: Record<string, unknown> = {
     customer_id: opts.customerId,
   };
-  if (opts.returnUrl) payload.return_url = opts.returnUrl;
   const res = await fetch(`${CREEM_BASE[creemEnv()]}/v1/customers/billing`, {
     method: "POST",
     headers: creemHeaders(),
