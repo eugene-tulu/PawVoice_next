@@ -49,6 +49,11 @@ interface VapiToolCall {
 
 interface VapiMessage {
   type?: string;
+  // `end-of-call-report` carries timing/duration at the message level (not under `call`).
+  startedAt?: string | number;
+  endedAt?: string | number;
+  durationSeconds?: number;
+  durationMs?: number;
   call?: VapiCall;
   callId?: string;
   customer?: { number?: string };
@@ -169,7 +174,8 @@ function readParams(toolCall: VapiToolCall): Record<string, unknown> {
 function extractEndedAt(message: VapiEnvelope): number | undefined {
   const inner = message?.message;
   const call = inner?.call ?? message.call ?? {};
-  const endedAt = call?.endedAt ?? inner?.call?.endedAt;
+  // Vapi's end-of-call-report carries these at the message level, not under `call`.
+  const endedAt = inner?.endedAt ?? call?.endedAt ?? inner?.call?.endedAt;
   if (typeof endedAt === "string") {
     const t = Date.parse(endedAt);
     return Number.isFinite(t) ? t : undefined;
@@ -181,15 +187,24 @@ function extractEndedAt(message: VapiEnvelope): number | undefined {
 function extractDurationSec(message: VapiEnvelope): number | undefined {
   const inner = message?.message;
   const call = inner?.call ?? message.call ?? {};
-  const d = call?.durationSeconds ?? inner?.call?.durationSeconds;
+  // `durationSeconds` (and `durationMs`) live at the message level for
+  // end-of-call-report.
+  const d = inner?.durationSeconds ?? call?.durationSeconds ?? inner?.call?.durationSeconds;
   if (typeof d === "number") return Math.max(0, Math.floor(d));
+  if (typeof d === "string") {
+    const n = Number(d);
+    if (Number.isFinite(n)) return Math.max(0, Math.floor(n));
+  }
+  const ms = inner?.durationMs;
+  if (typeof ms === "number" && ms > 0) return Math.max(0, Math.floor(ms / 1000));
   return undefined;
 }
 
 function extractStartedAt(message: VapiEnvelope): number | undefined {
   const inner = message?.message;
   const call = inner?.call ?? message.call ?? {};
-  const startedAt = call?.startedAt ?? inner?.call?.startedAt;
+  // Vapi's end-of-call-report carries these at the message level, not under `call`.
+  const startedAt = inner?.startedAt ?? call?.startedAt ?? inner?.call?.startedAt;
   if (typeof startedAt === "string") {
     const t = Date.parse(startedAt);
     return Number.isFinite(t) ? t : undefined;
