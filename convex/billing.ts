@@ -23,20 +23,28 @@ export const recordBilling = internalAction({
     callId: v.string(),
     endedAt: v.optional(v.number()),
     durationSec: v.optional(v.number()),
+    // Actual call start time from Vapi's end-of-call report. Used to derive an
+    // accurate duration when `durationSec` is not provided (web calls often omit
+    // `durationSeconds`), and to reconstruct the session for web calls.
+    startedAt: v.optional(v.number()),
     // Web calls never emit `assistant-request` (which normally creates the
     // session), so pass the caller identity from the end-of-call report so we
     // can still attribute and bill the call.
     callerPhone: v.optional(v.string()),
     authId: v.optional(v.string()),
   },
-  handler: async (ctx: ActionCtx, { callId, endedAt, durationSec: reportedSec, callerPhone, authId }): Promise<{ ok: boolean; costCents?: number; durationSec?: number; reason?: string }> => {
+  handler: async (ctx: ActionCtx, { callId, endedAt, durationSec: reportedSec, startedAt: reportedStartedAt, callerPhone, authId }): Promise<{ ok: boolean; costCents?: number; durationSec?: number; reason?: string }> => {
     let cs = await ctx.runQuery(internal.callSessions.byCallId, { callId });
 
     // Web calls don't fire `assistant-request`, so no session exists yet.
     // Reconstruct it from the end-of-call report so billing can proceed.
     if (!cs) {
       const end = endedAt ?? Date.now();
-      const dur = reportedSec ?? 0;
+      // Prefer Vapi's reported start time; fall back to end − reported duration.
+      // If neither is available the session start collapses to `end`, which
+      // would bill 0 — so we still attempt attribution, just with no charge.
+      const start =
+        reportedStartedAt ?? (reportedSec ? end - reportedSec * 1000 : end);
       const user = callerPhone
         ? await ctx.runQuery(internal.users.getByPhone, { phone: callerPhone })
         : authId
@@ -48,9 +56,7 @@ export const recordBilling = internalAction({
           callerPhone: callerPhone ?? undefined,
           authId: authId ?? undefined,
           userId: user._id,
-          // Reconstruct the start time from the reported duration so the
-          // billed duration matches what Vapi reports.
-          startedAt: Math.max(0, end - dur * 1000),
+          startedAt: Math.max(0, start),
         });
         cs = await ctx.runQuery(internal.callSessions.byCallId, { callId });
       }

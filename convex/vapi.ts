@@ -18,6 +18,7 @@ interface VapiCall {
   assistant?: { metadata?: Record<string, unknown> };
   assistantOverrides?: { variableValues?: Record<string, unknown> };
   endedAt?: string | number;
+  startedAt?: string | number;
   durationSeconds?: number;
 }
 
@@ -182,6 +183,18 @@ function extractDurationSec(message: VapiEnvelope): number | undefined {
   const call = inner?.call ?? message.call ?? {};
   const d = call?.durationSeconds ?? inner?.call?.durationSeconds;
   if (typeof d === "number") return Math.max(0, Math.floor(d));
+  return undefined;
+}
+
+function extractStartedAt(message: VapiEnvelope): number | undefined {
+  const inner = message?.message;
+  const call = inner?.call ?? message.call ?? {};
+  const startedAt = call?.startedAt ?? inner?.call?.startedAt;
+  if (typeof startedAt === "string") {
+    const t = Date.parse(startedAt);
+    return Number.isFinite(t) ? t : undefined;
+  }
+  if (typeof startedAt === "number" && startedAt > 0) return startedAt;
   return undefined;
 }
 
@@ -405,17 +418,30 @@ export const vapiWebhook = httpAction(async (ctx, request) => {
     case "end-of-call-report": {
       const endedAt = extractEndedAt(message);
       const durationSec = extractDurationSec(message);
+      const startedAt = extractStartedAt(message);
       // `callId`, `customerNumber`, and `authId` are extracted at the top of
       // this handler. Web calls carry identity only via `authId` (no phone),
       // so forward both so recordBilling can attribute the call when no
       // assistant-request session exists.
       console.log(
         "vapi end-of-call-report:",
-        JSON.stringify({ callId, customerNumber, authId, durationSec })
+        JSON.stringify({
+          callId,
+          customerNumber,
+          authId,
+          durationSec,
+          startedAt,
+          endedAt,
+          messageKeys: Object.keys(message?.message ?? {}),
+          callKeys: Object.keys(
+            (message?.message?.call ?? message?.call) ?? {}
+          ),
+        })
       );
       await ctx.runAction(internal.billing.recordBilling, {
         callId,
         endedAt,
+        startedAt,
         callerPhone: customerNumber
           ? normalizePhone(customerNumber) ?? undefined
           : undefined,
