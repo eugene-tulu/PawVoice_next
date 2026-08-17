@@ -12,7 +12,7 @@ import {
 import { creemCheckoutUrl } from "./dodo";
 
 export const CENTS_PER_MIN = 18;
-export const BUFFER_CENTS = 500; // $5 overdraft: calls never cut off; next call blocks only at <-500
+export const BUFFER_CENTS = 500; // $5 overdraft: calls never cut off; next call blocks at <=-500 cents
 export const AUTO_REFILL_THRESHOLD_CENTS = 300; // <$3 triggers attempted auto-refill
 export const MIN_TOPUP_CENTS = 1000; // $10 minimum top-up
 

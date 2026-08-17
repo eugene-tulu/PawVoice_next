@@ -313,6 +313,26 @@ export default function CallPage() {
       return;
     }
     if (!me) return;
+    // Web calls have no `assistant-request` event to gate on (that only fires for
+    // inbound phone calls), so verify the balance here before handing off to Vapi.
+    // Block honest out-of-credit attempts; a transient check failure falls back to
+    // the cached `me.credits` so a network blip can't hard-block a valid caller.
+    let canStart = (me.credits ?? 0) > -500;
+    try {
+      const gate = await convex.query(api.users.canStartCall);
+      canStart = gate.ok;
+    } catch {
+      canStart = (me.credits ?? 0) > -500;
+    }
+    if (!canStart) {
+      startingRef.current = false;
+      setCallState("idle");
+      setError(
+        "Your PawVoice balance is too low to start a call. Add credits in the app, then try again."
+      );
+      return;
+    }
+
     // Guard against double-start (e.g. rapid clicks or re-entrancy)
     if (startingRef.current) return;
 

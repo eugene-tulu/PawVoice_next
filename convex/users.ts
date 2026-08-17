@@ -79,6 +79,23 @@ export const me = query({
   },
 });
 
+// Pre-call gate for the web-call flow, which has no `assistant-request` event to
+// block on (that only fires for inbound phone calls). Mirrors the BUFFER_CENTS
+// check in convex/vapi.ts — must stay in sync with that value (currently 500).
+export const canStartCall = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return { ok: false as const, credits: 0 };
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_auth_id", (q) => q.eq("authId", identity.subject))
+      .first();
+    if (!user) return { ok: false as const, credits: 0 };
+    return { ok: user.credits > -500, credits: user.credits };
+  },
+});
+
 // Internal helpers used by the Vapi webhook and other functions.
 export const getByAuthId = internalQuery({
   args: { authId: v.string() },

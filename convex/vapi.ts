@@ -256,7 +256,7 @@ export const vapiWebhook = httpAction(async (ctx, request) => {
           error: `No account is registered for this caller. Sign up at ${SITE}/register before calling. Thank you.`,
         });
       }
-      if ((user.credits ?? 0) < -BUFFER_CENTS) {
+      if ((user.credits ?? 0) <= -BUFFER_CENTS) {
         return json(200, {
           error: `Your balance is too low. Please add credits at ${SITE}/dashboard before calling. Thank you.`,
         });
@@ -368,6 +368,21 @@ export const vapiWebhook = httpAction(async (ctx, request) => {
         resolvedAuthId = resolvedAuthId ?? session?.authId ?? undefined;
       }
 
+      // Server-side backstop: even if a caller bypasses the client-side gate,
+      // refuse to log activities once they're past the overdraft buffer. Vapi's
+      // own per-minute transport cost still accrues (handled by recordBilling),
+      // but we don't give away unlimited free logging. `undoLastEntry` is allowed
+      // regardless so a user can still clean up an earlier (paid) log.
+      let balanceOk = true;
+      {
+        const acct = resolvedPhone
+          ? await ctx.runQuery(internal.users.getByPhone, { phone: resolvedPhone })
+          : resolvedAuthId
+            ? await ctx.runQuery(internal.users.getByAuthId, { authId: resolvedAuthId })
+            : null;
+        if (acct && acct.credits <= -BUFFER_CENTS) balanceOk = false;
+      }
+
       // Vapi delivers tool calls in either `toolCallList` (flattened) or
       // `toolWithToolCallList` (with the original tool config), and nests the
       // name/arguments in several shapes. `toolCalls` is the de-duplicated list.
@@ -384,20 +399,28 @@ export const vapiWebhook = httpAction(async (ctx, request) => {
         let outcome: unknown;
         try {
           if (name === "logactivity") {
-            outcome = await ctx.runMutation(internal.logs.logActivity, {
-              ...params,
-              callId,
-              callerPhone: resolvedPhone ?? undefined,
-              authId: resolvedAuthId ?? undefined,
-            } as {
-              pet: string;
-              activity_type: string;
-              duration?: string;
-              verbatim_notes?: string;
-              callId: string;
-              callerPhone?: string;
-              authId?: string;
-            });
+            if (!balanceOk) {
+              outcome = {
+                ok: false,
+                readback:
+                  "Your PawVoice balance is too low to save activities. Please add credits in the app, then call again. Thank you.",
+              };
+            } else {
+              outcome = await ctx.runMutation(internal.logs.logActivity, {
+                ...params,
+                callId,
+                callerPhone: resolvedPhone ?? undefined,
+                authId: resolvedAuthId ?? undefined,
+              } as {
+                pet: string;
+                activity_type: string;
+                duration?: string;
+                verbatim_notes?: string;
+                callId: string;
+                callerPhone?: string;
+                authId?: string;
+              });
+            }
           } else if (name === "undolastentry") {
             outcome = await ctx.runMutation(internal.logs.undoLastEntry, {
               callId,
