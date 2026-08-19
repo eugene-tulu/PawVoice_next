@@ -4,10 +4,12 @@ import { useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useToast } from "./toast";
 
+// Mirrors CENTS_PER_MIN in convex/billing.ts — keep both in sync when the rate changes.
+const CENTS_PER_MIN = 35;
 const CREDIT_PACKS = [
-  { cents: 1000, label: "$10", minutes: 55 },
-  { cents: 2500, label: "$25", minutes: 139 },
-  { cents: 6000, label: "$60", minutes: 333 },
+  { cents: 1000, label: "$10" },
+  { cents: 2500, label: "$25" },
+  { cents: 6000, label: "$60" },
 ];
 
 export default function BuyCredits() {
@@ -56,7 +58,7 @@ export default function BuyCredits() {
                 Redirecting…
               </span>
             ) : (
-              `${pack.label} (${pack.minutes} min)`
+              `${pack.label} (${Math.floor(pack.cents / CENTS_PER_MIN)} min)`
             )}
           </button>
         ))}

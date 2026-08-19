@@ -47,10 +47,13 @@ const FEATURES = [
   },
 ];
 
+// Mirrors CENTS_PER_MIN in convex/billing.ts — keep both in sync when the rate changes.
+const CENTS_PER_MIN = 35;
+const packMinutes = (cents: number) => Math.floor(cents / CENTS_PER_MIN);
 const PACKS = [
-  { label: "Small", price: "$10", minutes: 55, note: "Casual logging" },
-  { label: "Medium", price: "$25", minutes: 139, note: "Most popular", featured: true },
-  { label: "Large", price: "$60", minutes: 333, note: "Busy households" },
+  { label: "Small", price: "$10", minutes: packMinutes(1000), note: "Casual logging" },
+  { label: "Medium", price: "$25", minutes: packMinutes(2500), note: "Most popular", featured: true },
+  { label: "Large", price: "$60", minutes: packMinutes(6000), note: "Busy households" },
 ];
 
 const FAQ = [
