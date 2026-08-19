@@ -36,7 +36,7 @@ Call audio and transcripts are handled by our providers as described in our [Pri
 
 ## 5. Billing
 
-- The Service is **pay-as-you-go**. You buy prepaid credit (your first top-up is $10 or more), and voice usage is metered at **$0.18 per minute**.
+- The Service is **pay-as-you-go**. You buy prepaid credit (your first top-up is $10 or more), and voice usage is metered at **$0.35 per minute**.
 - If your balance drops below $3, we'll email you a top-up prompt. We do **not** charge a saved card automatically — you choose when to add credits.
 - We keep a small overdraft buffer so a call already in progress is never cut off mid-conversation. Once your balance (including the buffer) runs out, new calls won't connect until you add credits.
 - **Credits are non-refundable once purchased**, except where applicable law requires otherwise (for example, duplicate, fraudulent, or failed charges).

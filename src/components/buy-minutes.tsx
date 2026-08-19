@@ -40,7 +40,7 @@ export default function BuyCredits() {
         Buy credits
       </h3>
       <p className="text-sm text-ink-2 mb-4">
-        $0.18 per minute. Packs never expire.
+        $0.35 per minute. Packs never expire.
       </p>
       <div className="space-y-2">
         {CREDIT_PACKS.map((pack) => (

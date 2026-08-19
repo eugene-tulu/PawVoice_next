@@ -146,7 +146,7 @@ export default function Dashboard() {
           <div className="border border-rule rounded-lg p-5">
             <p className="text-sm text-ink-2 mb-3">
               Call from your browser — speak naturally and PawVoice logs
-              structured entries for each pet. $0.18/min.
+              structured entries for each pet. $0.35/min.
             </p>
             {!hasPhone && (
               <p className="text-xs text-muted mb-3">

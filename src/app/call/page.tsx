@@ -730,7 +730,7 @@ export default function CallPage() {
               >
                 Settings
               </span>
-              . Each call costs $0.18/minute against your credit balance.
+              . Each call costs $0.35/minute against your credit balance.
             </p>
             <p className="text-xs text-ink-2">
               <strong>Tell the assistant:</strong> which pet, what activity,

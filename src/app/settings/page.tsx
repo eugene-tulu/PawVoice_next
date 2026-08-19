@@ -174,7 +174,7 @@ export default function Settings() {
               </strong>
             </p>
             <p className="text-xs text-muted mt-1">
-              $0.18 per minute of voice call. Credits never expire.
+              $0.35 per minute of voice call. Credits never expire.
             </p>
             <button
               onClick={handlePortal}

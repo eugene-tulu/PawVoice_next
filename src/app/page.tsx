@@ -42,7 +42,7 @@ const FEATURES = [
   },
   {
     title: "Pay as you go",
-    body: "$0.18 per minute. Credit packs never expire — no subscriptions, no waste.",
+    body: "$0.35 per minute. Credit packs never expire — no subscriptions, no waste.",
     span: "lg:col-span-2",
   },
 ];
@@ -60,7 +60,7 @@ const FAQ = [
   },
   {
     q: "How much does it cost?",
-    a: "Calls are $0.18 per minute. Buy credit packs that never expire, so you only pay for what you use.",
+    a: "Calls are $0.35 per minute. Buy credit packs that never expire, so you only pay for what you use.",
   },
   {
     q: "Can I share logs with a sitter?",
@@ -104,7 +104,7 @@ export default function Home() {
             </div>
             <dl className="mt-10 flex flex-wrap gap-x-8 gap-y-3 text-sm">
               {[
-                ["$0.18/min", "per voice call"],
+                ["$0.35/min", "per voice call"],
                 ["No subscription", "pay for what you use"],
                 ["24h", "to edit any entry"],
               ].map(([k, v]) => (
