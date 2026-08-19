@@ -30,9 +30,6 @@ export const deleteAccount = mutation({
       .collect();
     const petIds = memberships.map((m) => m.petId);
 
-    // All access links (used to scope deletes to owned pets below).
-    const allLinks = await ctx.db.query("accessLinks").collect();
-
     for (const petId of petIds) {
       const pet = await ctx.db.get(petId);
       if (!pet || pet.ownerId !== userId) continue;
@@ -43,11 +40,6 @@ export const deleteAccount = mutation({
         .withIndex("by_pet_time", (q) => q.eq("petId", petId))
         .collect();
       for (const l of petLogs) await ctx.db.delete(l._id);
-
-      // View-only access links for this pet.
-      for (const link of allLinks) {
-        if (link.petId === petId) await ctx.db.delete(link._id);
-      }
 
       // Pending invites for this pet.
       const petInvites = await ctx.db

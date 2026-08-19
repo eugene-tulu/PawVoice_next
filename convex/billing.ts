@@ -15,6 +15,13 @@ export const CENTS_PER_MIN = 18;
 export const BUFFER_CENTS = 500; // $5 overdraft: calls never cut off; next call blocks at <=-500 cents
 export const AUTO_REFILL_THRESHOLD_CENTS = 300; // <$3 triggers attempted auto-refill
 export const MIN_TOPUP_CENTS = 1000; // $10 minimum top-up
+// Hard ceiling on a single billed call (also enforced by Vapi maxDurationSeconds
+// in vapiSetup.ts). Caps financial exposure if a call fails to end.
+export const MAX_CALL_SECONDS = 3 * 3600;
+
+// Mirrors the gate in convex/vapi.ts. Inbound phone billing/attribution is off
+// for the web-only launch; flip only after phone verification ships.
+const PHONE_CALLING_ENABLED = process.env.PHONE_CALLING_ENABLED === "true";
 
 // Called from the Vapi end-of-call-report webhook. Bills the call, records
 // usage, and (best-effort) triggers an auto-refill when the balance is low.
@@ -39,6 +46,13 @@ export const recordBilling = internalAction({
     // Web calls don't fire `assistant-request`, so no session exists yet.
     // Reconstruct it from the end-of-call report so billing can proceed.
     if (!cs) {
+      // Web-only launch: inbound phone calls are disabled, so don't attribute or
+      // bill a stray end-of-call-report that resolves only by caller phone.
+      // (Web calls carry authId and are still billed through this path.)
+      if (callerPhone && !authId && !PHONE_CALLING_ENABLED) {
+        return { ok: false, reason: "phone calling disabled" };
+      }
+
       const end = endedAt ?? Date.now();
       // Prefer Vapi's reported start time; fall back to end − reported duration.
       // If neither is available the session start collapses to `end`, which
@@ -64,20 +78,23 @@ export const recordBilling = internalAction({
 
     if (!cs) return { ok: false, reason: "no call session" };
 
-    const end = endedAt ?? cs.endedAt ?? Date.now();
-    // Prefer Vapi's reported duration; fall back to start→end delta.
-    const durationSec =
-      reportedSec ??
-      (cs.startedAt ? Math.max(0, Math.floor((end - cs.startedAt) / 1000)) : 0);
-    const costCents = Math.round((durationSec * CENTS_PER_MIN) / 60);
-    const now = Date.now();
+      const end = endedAt ?? cs.endedAt ?? Date.now();
+      // Prefer Vapi's reported duration; fall back to start→end delta.
+      const durationSec =
+        reportedSec ??
+        (cs.startedAt ? Math.max(0, Math.floor((end - cs.startedAt) / 1000)) : 0);
+      // Cap billed duration at MAX_CALL_SECONDS so a stuck/never-ending call
+      // can't rack up unbounded charges (Vapi also enforces this server-side).
+      const billedSec = Math.min(durationSec, MAX_CALL_SECONDS);
+      const costCents = Math.round((billedSec * CENTS_PER_MIN) / 60);
+      const now = Date.now();
 
-    await ctx.runMutation(internal.callSessions.finalize, {
-      callId,
-      endedAt: end,
-      durationSec,
-      costCents,
-    });
+      await ctx.runMutation(internal.callSessions.finalize, {
+        callId,
+        endedAt: end,
+        durationSec: billedSec,
+        costCents,
+      });
 
     if (cs.userId) {
       await ctx.runMutation(internal.users.deductCredits, {
@@ -94,7 +111,7 @@ export const recordBilling = internalAction({
       await ctx.runMutation(internal.usageEvents.create, {
         userId: cs.userId,
         callId,
-        durationSec,
+        durationSec: billedSec,
         costCents,
         activityCount,
         initiatedBy: (user?.role as string) ?? "sitter",

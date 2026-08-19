@@ -104,6 +104,10 @@ const UNDO_LAST_TOOL = {
 const ASSISTANT_PAYLOAD = {
   name: "PawVoice Activity Logger",
   firstMessage: ASSISTANT_FIRST_MESSAGE,
+  // Hard stop so a call can't run unbounded (caps Vapi transport + our billing
+  // exposure). Mirrors MAX_CALL_SECONDS in billing.ts. Re-run setupAssistant
+  // after changing this for it to apply to the live assistant.
+  maxDurationSeconds: 10800,
   model: {
     provider: "openai",
     model: "gpt-4o",

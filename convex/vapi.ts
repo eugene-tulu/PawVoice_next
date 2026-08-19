@@ -10,6 +10,11 @@ const WEBHOOK_SECRET = process.env.VAPI_WEBHOOK_SECRET ?? "";
 const ASSISTANT_ID = process.env.VAPI_ASSISTANT_ID ?? "";
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.SITE_URL ?? "";
 
+// Inbound phone calling is disabled for the web-only launch. Flip to "true"
+// ONLY after phone-number verification ships (see users.registerPhone) —
+// until then, caller-ID → account mapping is unverified and unsafe to trust.
+const PHONE_CALLING_ENABLED = process.env.PHONE_CALLING_ENABLED === "true";
+
 interface VapiCall {
   id?: string;
   customer?: { number?: string };
@@ -214,7 +219,10 @@ function extractStartedAt(message: VapiEnvelope): number | undefined {
 }
 
 export const vapiWebhook = httpAction(async (ctx, request) => {
-  if (!verifySignature(request)) return new Response("Unauthorized", { status: 401 });
+  if (!verifySignature(request)) {
+    console.error("Vapi webhook: unauthorized request (bad/missing signature)");
+    return new Response("Unauthorized", { status: 401 });
+  }
 
   const message = (await request.json().catch(() => ({}))) as VapiEnvelope;
   const type = message?.message?.type;
@@ -222,6 +230,16 @@ export const vapiWebhook = httpAction(async (ctx, request) => {
 
   switch (type) {
      case "assistant-request": {
+      // Web-only launch: inbound phone calls are not served yet. assistant-request
+      // fires only for inbound phone calls (web calls never emit it), so this
+      // single gate disables the entire phone channel without touching web.
+      if (!PHONE_CALLING_ENABLED) {
+        return json(200, {
+          error:
+            "PawVoice phone calling isn't available yet. Please use the web app to log pet activities by voice. Thank you.",
+        });
+      }
+
       const callerPhone = customerNumber
         ? normalizePhone(customerNumber)
         : null;
@@ -256,6 +274,19 @@ export const vapiWebhook = httpAction(async (ctx, request) => {
           error: `No account is registered for this caller. Sign up at ${SITE}/register before calling. Thank you.`,
         });
       }
+
+      // Concurrency guard: block a new inbound call while one is still active
+      // (prevents duplicate/parallel billing for the same account).
+      const active = await ctx.runQuery(internal.callSessions.activeForUser, {
+        userId: user._id,
+      });
+      if (active) {
+        return json(200, {
+          error:
+            "You already have an active PawVoice call. Please end it before starting another. Thank you.",
+        });
+      }
+
       if ((user.credits ?? 0) <= -BUFFER_CENTS) {
         return json(200, {
           error: `Your balance is too low. Please add credits at ${SITE}/dashboard before calling. Thank you.`,

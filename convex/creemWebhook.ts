@@ -44,9 +44,30 @@ export const creemWebhook = httpAction(async (ctx, req) => {
     object.customer &&
     object.customer.email
   ) {
+    // Creem sends `order.amount` in the currency's minor unit (cents). We credit
+    // 1:1 with our integer-cent balance, so a $10 pack => 1000 credits. This is
+    // the load-bearing assumption for pricing — logged loudly so a live test
+    // transaction can confirm the unit before flipping to live keys.
+    const rawAmount = Number(object.order.amount ?? 0);
+    console.log(
+      "Creem checkout.completed:",
+      JSON.stringify({
+        orderId: object.order.id,
+        amount: rawAmount,
+        currency: object.order.currency,
+      })
+    );
+    if (!Number.isFinite(rawAmount) || rawAmount <= 0) {
+      await ctx.runAction(internal.alerts.notify, {
+        subject: "Creem invalid amount",
+        message: `orderId=${object.order.id}\nrawAmount=${object.order.amount}\ncurrency=${object.order.currency}`,
+      });
+      return new Response("ok", { status: 200 });
+    }
+
     const res = await ctx.runMutation(internal.payments.addCreditsFromPayment, {
       email: object.customer.email.toLowerCase(),
-      amount: Number(object.order.amount ?? 0),
+      amount: rawAmount,
       currency: object.order.currency ?? "USD",
       dodoPaymentId: String(object.order.id),
       dodoCustomerId: object.customer.id,
@@ -58,6 +79,10 @@ export const creemWebhook = httpAction(async (ctx, req) => {
         email: object.customer.email,
         orderId: object.order.id,
       });
+      await ctx.runAction(internal.alerts.notify, {
+        subject: "Creem credit not applied",
+        message: `reason=${res.reason}\nemail=${object.customer.email}\norderId=${object.order.id}`,
+      });
     }
   } else {
     console.error("Creem webhook: unhandled payload shape", {
@@ -66,6 +91,10 @@ export const creemWebhook = httpAction(async (ctx, req) => {
       orderId: object?.order?.id,
       hasCustomer: !!object?.customer,
       customerEmail: object?.customer?.email,
+    });
+    await ctx.runAction(internal.alerts.notify, {
+      subject: "Creem webhook unhandled payload",
+      message: `eventType=${eventType}\norderId=${object?.order?.id}\ncustomerEmail=${object?.customer?.email}`,
     });
   }
 

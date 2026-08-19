@@ -51,6 +51,25 @@ export const byCallId = internalQuery({
   },
 });
 
+// Returns the user's currently-active (not finalized, not stale) call session,
+// or null. Used to enforce one-active-call-per-user before a new call starts.
+export const activeForUser = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, { userId }) => {
+    const rows = await ctx.db
+      .query("callSessions")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+    const now = Date.now();
+    const STALE_MS = 3 * 3600 * 1000; // matches MAX_CALL_SECONDS in billing.ts
+    return (
+      rows
+        .filter((r) => !r.endedAt && now - r.startedAt < STALE_MS)
+        .sort((a, b) => b.startedAt - a.startedAt)[0] ?? null
+    );
+  },
+});
+
 export const finalize = internalMutation({
   args: {
     callId: v.string(),

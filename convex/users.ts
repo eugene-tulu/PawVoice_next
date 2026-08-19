@@ -26,10 +26,11 @@ export const registerPhone = mutation({
     if (existing && existing._id !== user._id)
       throw new Error("This phone number is already registered to another account");
 
-    // Trust-on-register for v1: the caller must call FROM this exact number for
-    // Vapi caller-ID mapping, so a malicious user would need to also receive calls
-    // on it. Proper OTP verification (via an A/B flow) is a v1.1 follow-up.
-    await ctx.db.patch(user._id, { phone: e164, phoneVerified: true });
+    // NOTE: phone calls are disabled for the web-only launch (PHONE_CALLING_ENABLED),
+    // so this is not yet on the trust path. When phone ingestion is re-enabled,
+    // this must NOT auto-verify — real proof-of-control (e.g. Vapi outbound
+    // callback) is required before phoneVerified can be set true.
+    await ctx.db.patch(user._id, { phone: e164, phoneVerified: false });
     return { ok: true, phone: e164 };
   },
 });

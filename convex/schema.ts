@@ -104,16 +104,9 @@ export default defineSchema({
     durationSec: v.optional(v.number()),
     costCents: v.optional(v.number()),
     assistantId: v.optional(v.string()),
-  }).index("by_call_id", ["callId"]),
-
-  // View-only access link for non-account holders.
-  accessLinks: defineTable({
-    petId: v.id("pets"),
-    token: v.string(),
-    createdAt: v.number(),
-    expiresAt: v.number(),
-    lastUsedAt: v.optional(v.number()),
-  }).index("by_token", ["token"]),
+  })
+    .index("by_call_id", ["callId"])
+    .index("by_user", ["userId"]),
 
   // Usage instrumentation for future tier design.
   usageEvents: defineTable({

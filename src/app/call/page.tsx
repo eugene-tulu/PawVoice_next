@@ -437,6 +437,29 @@ export default function CallPage() {
           authId: me!.authId,
         },
       });
+
+      // Register the call server-side using the real Vapi call id. This enforces
+      // one-active-call-per-user: if a second call slips through, the mutation
+      // throws and we stop it. Call id may be absent in rare SDK states, in
+      // which case we skip the guard and rely on end-of-call reconstruction.
+      const callId = (instance as unknown as { call?: { id?: string } }).call
+        ?.id;
+      if (callId) {
+        try {
+          await convex.mutation(api.webCall.begin, {
+            callId,
+            assistantId: callConfig.assistantId,
+          });
+        } catch (e) {
+          startingRef.current = false;
+          setCallState("idle");
+          await instance.stop().catch(() => {});
+          setError(
+            e instanceof Error ? e.message : "Could not start the call"
+          );
+          return;
+        }
+      }
     } catch (e) {
       startingRef.current = false;
       setCallState("idle");
